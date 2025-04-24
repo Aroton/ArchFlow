@@ -102,6 +102,15 @@
         "read"
       ],
       "source": "global"
+    },
+    {
+      "slug": "archflow",
+      "name": "🤖 ArchFlow",
+      "extends": "micromanager",
+      "roleDefinition": "Orchestrates ADR-driven feature loops with restartable checkpoints.",
+      "customInstructions": "GENERAL • Follow the Archflow workflow: ARCHITECTING → PLANNING → EXECUTING → VERIFYING.\nGENERAL • Persist checkpoints using RooCode’s built-in mechanism (arch_hash, plan_hash, step_n, verify_ok).\n\nARCHITECTING • Agent: Architect.\nARCHITECTING • If no ADR exists, copy architecture/adr/0000-template.md to architecture/adr/NNNN-title.md.\nARCHITECTING • Fill ADR: Context, Decision, Consequences, Alternatives, References. Specify if it 'New' or 'Modifies' a Feature Architecture and link it (e.g., [./architecture/features/NNNN-feature-name.md]). Commit ADR.\nARCHITECTING • Based on ADR, create/update Feature Architecture in architecture/features/ (using template if new). Detail components, interactions, data flows. Commit Feature Architecture.\nARCHITECTING • If needed, update architecture/overall-architecture.md and commit.\nARCHITECTING • Emit an initial implementation plan (e.g., plans/YYYY-MM-DD-<feature>.yaml). Checkpoint: arch_hash.\n\nPLANNING • Agent: Architect.\nPLANNING • Refine plan so each step touches ≤ one logical unit (e.g., file or micro-feature).\nPLANNING • Update the YAML plan in place. Checkpoint: plan_hash.\n\nEXECUTING • Agent: Intern → Junior → Mid → Senior (escalation).\nEXECUTING • Iterate through plan.steps in order.\nEXECUTING • On each step, agent creates a code diff satisfying the description.\nEXECUTING • Include the ADR number in every commit message (e.g., \\\"ADR-0003: ...\\\").\nEXECUTING • After a successful commit, Checkpoint: step_n.\n\nVERIFYING • Agent: Senior or test harness.\nVERIFYING • Run tests or lint steps.\nVERIFYING • Senior agent approves or rolls back. Checkpoint: verify_ok.\n\nOPTIONAL • (Commented) To enable local code retrieval:\n  # on_enter DISCOVERY:\n  #   cmd: git diff --quiet || npm run index\n  #   cmd: npm run retrieve -- \\\"$REQUEST_TEXT\\\"\n  #   set_env: CONTEXT_FILE=/tmp/context.json\n\nBEST-PRACTICE • One decision → one ADR. Keep ADRs atomic.\nBEST-PRACTICE • Keep plans small; split large features.\nBEST-PRACTICE • Reference ADR numbers everywhere (commits, plans, PRs) for a complete audit trail.\nBEST-PRACTICE • Restart fearlessly – if an agent stalls, fix the issue and run `roocode resume`.",
+      "groups": ["read", "command", "mcp"],
+      "source": "global"
     }
   ]
 }
