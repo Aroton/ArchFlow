@@ -20,7 +20,6 @@ The loop automates design → plan → code → verify, while staying restart-sa
 │   └── diagrams/             # Images referenced by ADRs or feature docs
 ├── plans/                    # Implementation plans (*.yaml)
 ├── src/                      # Application code
-├── runtime_checkpoints/      # RooCode checkpoint state (auto-managed)
 ├── scripts/
 ```
 
@@ -33,20 +32,20 @@ The loop automates design → plan → code → verify, while staying restart-sa
 | **Overall Architecture (`architecture/overall-architecture.md`)** | High-level view of the entire system. | Initially, then updated as needed during **ARCHITECTING**. |
 | **Feature Architecture (`architecture/features/*.md`)** | Detailed design for a specific feature. | Created or updated during **ARCHITECTING**, triggered by an ADR. |
 | **ADR (`architecture/adr/*.md`)** | Records a specific decision impacting feature or overall architecture. Links to relevant Feature Architecture. | During **ARCHITECTING** |
-| **Plan (`plans/*.yaml`)** | Step-by-step implementation checklist tied to an ADR. | During **PLANNING** |
+| **Plan (`plans/*.yaml`)** | Step-by-step implementation checklist tied to an ADR. Contains status fields (`scheduled`, `in_progress`, `completed`) for each step, enabling workflow resumption. | During **PLANNING**, updated during **EXECUTING** |
 | **Code commits** | Actual changes produced by AI agents. | During **EXECUTING** |
-| **Checkpoint state** | JSON blobs that let RooCode resume the workflow. | After every state transition |
 
 ---
 
 ## 3 States & Agents
 
-| State | Responsible Agent | Outputs | Checkpoint Key |
-|-------|-------------------|---------|----------------|
-| **ARCHITECTING** | *Architect* | new/updated ADR, new/updated Feature Architecture, updated Overall Architecture (if needed), initial plan | `arch_hash` |
-| **PLANNING** | *Architect* | refined `plans/*.yaml` | `plan_hash` |
-| **EXECUTING** | *Intern → Junior → Mid → Senior* | code changes  | `step_n` |
-| **VERIFYING** | *Senior* or test harness | test report; success flag | `verify_ok` |
+| State | Responsible Agent | Outputs |
+|-------|-------------------|---------|
+| **ARCHITECTING** | *Architect* | new/updated ADR, new/updated Feature Architecture, updated Overall Architecture (if needed), initial plan |
+| **PLANNING** | *Architect* | refined `plans/*.yaml` |
+| **EXECUTING** | *Intern → Junior → Mid → Senior* | code changes, updated plan status |
++ Note: Only agents defined in the `agentMode` enum (`intern`, `junior`, `midlevel`, `senior`) should be assigned during execution.
+| **VERIFYING** | *Senior* or test harness | test report; success flag |
 
 If a state fails, the Micro-Manager awaits human input.
 
@@ -84,12 +83,17 @@ steps:
   - id: step_1
     description: "Create proto definitions for User service"
     files: ["src/user/user.proto"]
+    agentMode: "intern | junior | midlevel | senior" # define the agent mode we will use for this step
+    status: "scheduled | in_progress | completed" # Tracks the state of each step
   - id: step_2
     description: "Generate TypeScript stubs via buf"
     files: ["src/user/generated/*"]
+    agentMode: "intern" # #Example: We will use the intern mode
+    status: "scheduled" # Example: This step hasn't started yet
 ```
 
-Each step becomes a checkpoint (`step_n`) so the loop can resume after interruptions.
+The `status` field for each step is updated as the workflow progresses. This allows the loop to intelligently resume from the last incomplete step.
++ Important: The agent assigned to a step (`agentMode`) is responsible for *both* executing the task *and* updating the `status` field within the same operation. Delegating status updates separately is incorrect behavior.
 
 ---
 
@@ -99,11 +103,10 @@ Each step becomes a checkpoint (`step_n`) so the loop can resume after interrupt
 # Kick off a new feature
 roocode run --manager archflow --request "Add MFA login flow"
 
-# Resume after manual fix
-roocode resume --manager archflow
+# Resume after interruption (reads plan YAML to find next step)
+roocode resume --manager archflow --plan plans/NNNN-feature-name.yaml
 ```
 
-RooCode handles checkpoint persistence in `runtime_checkpoints/`.
 
 ---
 
@@ -112,7 +115,7 @@ RooCode handles checkpoint persistence in `runtime_checkpoints/`.
 * **One decision → one ADR** – keep records atomic.
 * **Keep plans small** – split large features into multiple plans so checkpoints stay meaningful.
 * **Reference everything** – ADR number in commit messages, plan in pull-request description.
-* **Restart fearlessly** – if an agent stalls, fix the issue and run `roocode resume`.
+* **Restart fearlessly** – if an agent stalls, fix the issue and run `roocode resume --plan <your-plan.yaml>`. The workflow will pick up from the last incomplete step based on the status in the YAML.
 
 ---
 

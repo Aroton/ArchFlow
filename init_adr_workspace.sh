@@ -42,7 +42,6 @@ mkdir -p "$TARGET_DIR/architecture/features" || { echo "Error creating features 
 mkdir -p "$TARGET_DIR/architecture/adr" || { echo "Error creating adr dir"; exit 1; }
 mkdir -p "$TARGET_DIR/architecture/diagrams" || { echo "Error creating diagrams dir"; exit 1; }
 mkdir -p "$TARGET_DIR/plans" || { echo "Error creating plans dir"; exit 1; }
-mkdir -p "$TARGET_DIR/runtime_checkpoints" || { echo "Error creating runtime_checkpoints dir"; exit 1; }
 echo "Directories created successfully."
 
 # --- Template Copying ---

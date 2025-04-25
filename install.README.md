@@ -86,7 +86,6 @@ The script will create the following structure in your current directory (`my-ne
 │   │   └── 0000-template.md
 │   └── diagrams/
 ├── plans/
-└── runtime_checkpoints/
 ```
 
 You can now initialize a git repository (`git init`) and start your project using the Archflow development process.
