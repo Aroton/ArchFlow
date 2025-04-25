@@ -18,7 +18,7 @@ The loop automates design → plan → code → verify, while staying restart-sa
 │   │   ├── 0001-...md        # First accepted ADR
 │   │   └── 0002-...md
 │   └── diagrams/             # Images referenced by ADRs or feature docs
-├── plans/                    # Implementation plans (*.yaml)
+├── plans/                    # Implementation plans (*.md)
 ├── src/                      # Application code
 ├── scripts/
 ```
@@ -32,7 +32,7 @@ The loop automates design → plan → code → verify, while staying restart-sa
 | **Overall Architecture (`architecture/overall-architecture.md`)** | High-level view of the entire system. | Initially, then updated as needed during **ARCHITECTING**. |
 | **Feature Architecture (`architecture/features/*.md`)** | Detailed design for a specific feature. | Created or updated during **ARCHITECTING**, triggered by an ADR. |
 | **ADR (`architecture/adr/*.md`)** | Records a specific decision impacting feature or overall architecture. Links to relevant Feature Architecture. | During **ARCHITECTING** |
-| **Plan (`plans/*.yaml`)** | Step-by-step implementation checklist tied to an ADR. Contains status fields (`scheduled`, `in_progress`, `completed`) for each step, enabling workflow resumption. | During **PLANNING**, updated during **EXECUTING** |
+| **Plan (`plans/*.md`)** | Step-by-step implementation checklist tied to an ADR, written in Markdown. Contains status fields (`scheduled`, `in_progress`, `completed`) for each step, enabling workflow resumption. | During **PLANNING**, updated during **EXECUTING** |
 | **Code commits** | Actual changes produced by AI agents. | During **EXECUTING** |
 
 ---
@@ -42,7 +42,7 @@ The loop automates design → plan → code → verify, while staying restart-sa
 | State | Responsible Agent | Outputs |
 |-------|-------------------|---------|
 | **ARCHITECTING** | *Architect* | new/updated ADR, new/updated Feature Architecture, updated Overall Architecture (if needed), initial plan |
-| **PLANNING** | *Architect* | refined `plans/*.yaml` |
+| **PLANNING** | *Architect* | refined `plans/*.md` |
 | **EXECUTING** | *Intern → Junior → Mid → Senior* | code changes, updated plan status |
 + Note: Only agents defined in the `agentMode` enum (`intern`, `junior`, `midlevel`, `senior`) should be assigned during execution.
 | **VERIFYING** | *Senior* or test harness | test report; success flag |
@@ -68,32 +68,42 @@ The typical flow for architectural changes is:
    - Review `architecture/overall-architecture.md`.
    - If the changes introduced by the ADR and Feature Architecture significantly impact the high-level view (e.g., adding a major new service, changing core patterns), update the diagram and descriptions accordingly.
    - Commit changes to the Overall Architecture.
-4. **Proceed to Planning:** Once the architecture artifacts are stable, create or refine the implementation plan (`plans/*.yaml`) based on the ADR and Feature Architecture.
+71 | 4. **Identify & Verify Dependencies:**
+72 |    - Based on the Feature Architecture, identify potential new external software dependencies (libraries, packages, etc.).
+73 |    - Check the project's relevant package manager file (e.g., `package.json`, `requirements.txt`) to verify if these dependencies are already installed or part of the existing project setup.
+74 |    - List any required *new* dependencies that need to be installed in the initial implementation plan.
+4. **Proceed to Planning:** Once the architecture artifacts are stable, create or refine the implementation plan (`plans/*.md`) based on the ADR and Feature Architecture.
 5. **Reference:** Ensure the ADR number is referenced in commit messages and the implementation plan.
 
 ---
 
 ## 5 Implementation-Plan Workflow
 
-*Plans* are YAML files containing an ordered list of tasks:
+*Plans* are Markdown files containing yaml blocks an ordered list of tasks, structured as follows:
 
 ```yaml
-adr: 0003-switch-to-grpc
-steps:
+adr: 0003-switch-to-grpc # example ADR reference
+feature: 0003-switch-to-grpc # Example feature reference
+steps: # An ordered list of tasks, each with the following fields
   - id: step_1
-    description: "Create proto definitions for User service"
-    files: ["src/user/user.proto"]
-    agentMode: "intern | junior | midlevel | senior" # define the agent mode we will use for this step
-    status: "scheduled | in_progress | completed" # Tracks the state of each step
+    description: Create proto definitions for User service
+    files:
+      - package.json
+      - package-lock.json
+    agentMode: "intern | junior | midlevel | senior" # Defines the agent mode for this step
+    status: "scheduled | in_progress | completed" # Tracks the state of the step
   - id: step_2
-    description: "Generate TypeScript stubs via buf"
-    files: ["src/user/generated/*"]
-    agentMode: "intern" # #Example: We will use the intern mode
-    status: "scheduled" # Example: This step hasn't started yet
+    description: Generate TypeScript stubs via buf
+    files:
+      - src/user/generated/*
+    agentMode: intern
+    status: scheduled
 ```
 
 The `status` field for each step is updated as the workflow progresses. This allows the loop to intelligently resume from the last incomplete step.
 + Important: The agent assigned to a step (`agentMode`) is responsible for *both* executing the task *and* updating the `status` field within the same operation. Delegating status updates separately is incorrect behavior.
+
++ **Dependency Handling:** If an implementation step discovers the need for a dependency *not* identified during architecture, the agent assigned to that step (`agentMode`) is responsible for adding it to the appropriate manifest file (e.g., `package.json`, `requirements.txt`, `Cargo.toml`) and ensuring it's installed as part of completing the step's task.
 
 ---
 
@@ -103,8 +113,8 @@ The `status` field for each step is updated as the workflow progresses. This all
 # Kick off a new feature
 roocode run --manager archflow --request "Add MFA login flow"
 
-# Resume after interruption (reads plan YAML to find next step)
-roocode resume --manager archflow --plan plans/NNNN-feature-name.yaml
+# Resume after interruption (reads plan Markdown to find next step)
+roocode resume --manager archflow --plan plans/NNNN-feature-name.md
 ```
 
 
@@ -115,7 +125,7 @@ roocode resume --manager archflow --plan plans/NNNN-feature-name.yaml
 * **One decision → one ADR** – keep records atomic.
 * **Keep plans small** – split large features into multiple plans so checkpoints stay meaningful.
 * **Reference everything** – ADR number in commit messages, plan in pull-request description.
-* **Restart fearlessly** – if an agent stalls, fix the issue and run `roocode resume --plan <your-plan.yaml>`. The workflow will pick up from the last incomplete step based on the status in the YAML.
+* **Restart fearlessly** – if an agent stalls, fix the issue and run `roocode resume --plan <your-plan.md>`. The workflow will pick up from the last incomplete step based on the status described in the Markdown plan.
 
 ---
 

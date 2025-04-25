@@ -1,14 +1,12 @@
 @/custom_modes.json @/README.md
 
-Help me update custom_modes.json archflow with the updates made in README.md.
+Help me update custom_modes.json archflow with the updates made in README.md. Write the update to a new file "new_archflow_mode.json" so the diff isn't excessively large.
 
-1. Analyse README.md and summarize the process in a concise way an AI agent can follow.
-2. Analyze custom_mode.json micromanager
+1. Analyse README.md and summarize the process in a concise way an AI agent can follow. Be sure to keep all instructions.
+2. Analyze custom_mode.json micromanager and summarize the process in a concise way an AI agent can follow.
 3. Merge micromanager and the README process and create the archflow custom mode.
-4. Define the delegate task tool at the top of customInstructions. All steps should use the delegate task to delegate to agents.
+4. Define the delegate task too usage at the top of customInstructions. All steps should use the delegate task to delegate to agents. Include all context that is required. Do not include an example of delegate task.
 4. Be sure to not lose context from micromanager, this is very important. archflow should have all instructions from the micromanager.
 5. Be sure to include any specific examples defined in README
 6. JSON in the format of ```"field": "val1 | val2 | val3"``` is defining available values for a field. In this example the only available values are val1, val2, and val3. Be sure not to lose this context.
 7. Don't update the groups access.
-
-Be sure to give me a human readable preview of the content of each field being updated, noting the significant updates.
