@@ -1,12 +1,23 @@
-@/custom_modes.json @/README.md
+@/README.md
 
-Help me update custom_modes.json archflow with the updates made in README.md. Write the update to a new file "new_archflow_mode.json" so the diff isn't excessively large.
+Here is a trimmed down example of the archflow roleDefinition
 
-1. Analyse README.md and summarize the process in a concise way an AI agent can follow. Be sure to keep all instructions.
-2. Analyze custom_mode.json micromanager and summarize the process in a concise way an AI agent can follow.
-3. Merge micromanager and the README process and create the archflow custom mode.
-4. Define the delegate task too usage at the top of customInstructions. All steps should use the delegate task to delegate to agents. Include all context that is required. Do not include an example of delegate task.
-4. Be sure to not lose context from micromanager, this is very important. archflow should have all instructions from the micromanager.
-5. Be sure to include any specific examples defined in README
-6. JSON in the format of ```"field": "val1 | val2 | val3"``` is defining available values for a field. In this example the only available values are val1, val2, and val3. Be sure not to lose this context.
-7. Don't update the groups access.
+```json
+{
+  "slug": "archflow",
+  "name": "🤖 ArchFlow",
+  "roleDefinition": "You are Roo, the Archflow orchestrator. You manage an AI-driven development loop ...",
+  "customInstructions": "## Core Principles\n- Follow the strict state progression: ....",
+  "groups": ["read"],
+  "source": "global"
+}
+```
+
+1. Analyze README.md
+2. Analyze the structure of the provided archflow json structure
+2. Summarize each section in README.md a concise way an AI agent can follow
+  - Be sure to include existing agent mode definitions
+3. Optimize for token usage
+4. Verify no details have been lost, if details have been lost, add them back in.
+5. Don't update the groups access.
+6. Write the new mode archflow mode to "new_archflow_mode.json"
