@@ -9,19 +9,20 @@ The loop automates design → plan → code → verify, while staying restart-sa
 
 ```
 .
-├── architecture/
-│   ├── overall-architecture.md # High-level system view
-│   ├── features/             # Detailed feature architectures
-│   │   └── NNNN-feature-name.md # Example feature doc
-│   ├── adr/                  # Architecture Decision Records (ADR)
-│   │   ├── 0000-template.md  # Copy & rename for each new decision
-│   │   ├── 0001-...md        # First accepted ADR
-│   │   └── 0002-...md
-│   └── diagrams/             # Images referenced by ADRs or feature docs
-├── plans/                    # Implementation plans (*.md)
-├── src/                      # Application code
-├── scripts/
+└── archflow/                 # Root directory created by init script
+    ├── architecture/
+    │   ├── overall-architecture.md # High-level system view
+    │   ├── features/             # Detailed feature architectures
+    │   │   └── NNNN-feature-name.md # Example feature doc
+    │   ├── adr/                  # Architecture Decision Records (ADR)
+    │   │   ├── 0000-template.md  # Copy & rename for each new decision
+    │   │   ├── 0001-...md        # First accepted ADR
+    │   │   └── 0002-...md
+    │   └── diagrams/             # Images referenced by ADRs or feature docs
+    ├── plans/                    # Implementation plans (*.md)
+    └── scripts/                  # Project-specific scripts (if applicable)
 ```
+Note: The `init_adr_workspace.sh` script (located in the ArchFlow repository root) initializes this structure within the `archflow/` subdirectory of your target project directory.
 
 ---
 
