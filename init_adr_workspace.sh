@@ -23,6 +23,7 @@ TARGET_DIR=$(pwd)
 SOURCE_OVERALL_ARCH="$SOURCE_REPO_DIR/architecture/overall-architecture.md"
 SOURCE_FEATURE_TEMPLATE="$SOURCE_REPO_DIR/architecture/features/template.md"
 SOURCE_ADR_TEMPLATE="$SOURCE_REPO_DIR/architecture/adr/0000-template.md"
+SOURCE_PLAN_TEMPLATE="$SOURCE_REPO_DIR/plans/0000-template.md"
 
 # --- Safety Check ---
 # Check if the current directory already contains Archflow structure elements
@@ -78,11 +79,13 @@ copy_template() {
 TARGET_ARCH_DIR="$TARGET_DIR/architecture"
 TARGET_FEATURES_DIR="$TARGET_DIR/architecture/features"
 TARGET_ADR_DIR="$TARGET_DIR/architecture/adr"
+TARGET_PLANS_DIR="$TARGET_DIR/plans"
 
 # Perform copies
 copy_template "$SOURCE_OVERALL_ARCH" "$TARGET_ARCH_DIR"
 copy_template "$SOURCE_FEATURE_TEMPLATE" "$TARGET_FEATURES_DIR"
 copy_template "$SOURCE_ADR_TEMPLATE" "$TARGET_ADR_DIR"
+copy_template "$SOURCE_PLAN_TEMPLATE" "$TARGET_PLANS_DIR"
 
 # --- Completion Message ---
 echo ""
