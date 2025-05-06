@@ -31,10 +31,10 @@ Note: The `init_adr_workspace.sh` script (located in the ArchFlow repository roo
 
 | Artifact | Purpose | When it’s written |
 |----------|---------|-------------------|
-| **Overall Architecture (`architecture/overall-architecture.md`)** | High-level view of the entire system. | Initially, then updated as needed during **ARCHITECTING**. |
-| **Feature Architecture (`architecture/features/*.md`)** | Detailed design for a specific feature. | Created or updated during **ARCHITECTING**, triggered by an ADR. |
-| **ADR (`architecture/adr/*.md`)** | Records a specific decision impacting feature or overall architecture. Links to relevant Feature Architecture. | During **ARCHITECTING** |
-| **Plan (`plans/*.md`)** | Step-by-step implementation checklist tied to an ADR, written in Markdown. Contains status fields (`scheduled`, `in_progress`, `completed`) for each step, enabling workflow resumption. | During **PLANNING**, updated during **EXECUTING** |
+| **Overall Architecture (`archflow/architecture/overall-architecture.md`)** | High-level view of the entire system. | Initially, then updated as needed during **ARCHITECTING**. |
+| **Feature Architecture (`archflow/architecture/features/*.md`)** | Detailed design for a specific feature. | Created or updated during **ARCHITECTING**, triggered by an ADR. |
+| **ADR (`archflow/architecture/adr/*.md`)** | Records a specific decision impacting feature or overall architecture. Links to relevant Feature Architecture. | During **ARCHITECTING** |
+| **Plan (`archflow/plans/*.md`)** | Step-by-step implementation checklist tied to an ADR, written in Markdown. Contains status fields (`scheduled`, `in_progress`, `completed`) for each step, enabling workflow resumption. | During **PLANNING**, updated during **EXECUTING** |
 | **Code commits** | Actual changes produced by AI agents. | During **EXECUTING**, **ARCHITECTING**, **PLANNING** |
 
 ---
@@ -88,14 +88,14 @@ When the Orchestrator delegates a task using the `new_task` tool, the instructio
 The typical flow for architectural changes is:
 
 1. **Create/Update ADR:**
-   - Copy `architecture/adr/0000-template.md` → `000N-title.md`.
+   - Copy `archflow/architecture/adr/0000-template.md` → `000N-title.md`.
    - Fill in the ADR details (Context, Decision, etc.).
-   - Crucially, specify if this ADR `New` or `Modifies` a Feature Architecture and provide the full relative path (e.g., `architecture/features/000N-feature-name.md`).
+   - Crucially, specify if this ADR `New` or `Modifies` a Feature Architecture and provide the full relative path (e.g., `archflow/architecture/features/000N-feature-name.md`).
 2. **Create/Update Feature Architecture:**
-   - Based on the ADR, create a new Feature Architecture document in `architecture/features/` (using `architecture/feature-template.md`) or update the existing one linked in the ADR.
+   - Based on the ADR, create a new Feature Architecture document in `archflow/architecture/features/` (using `archflow/architecture/feature-template.md`) or update the existing one linked in the ADR.
    - Detail the specific components, interactions, data flows, etc., for the feature.
 3. **Update Overall Architecture:**
-   - Review `architecture/overall-architecture.md`.
+   - Review `archflow/architecture/overall-architecture.md`.
    - If the changes introduced by the ADR and Feature Architecture significantly impact the high-level view (e.g., adding a major new service, changing core patterns), update the diagram and descriptions accordingly.
 4. **Identify & Verify Dependencies:**
    - Based on the Feature Architecture, identify potential new external software dependencies (libraries, packages, etc.).
@@ -124,7 +124,7 @@ The typical flow for planning is:
    - Copy the template `plans/0000-template.md` to a new file named `plans/NNNN-plan-name.md` (where `NNNN` matches the corresponding ADR number).
    - Edit the new plan file (`plans/NNNN-plan-name.md`):
      - Update the placeholder title and description at the top.
-     - **Crucially**, update the `adr:` and `feature:` fields within the YAML block to contain the **full relative paths** to the specific ADR and Feature Architecture documents being implemented (e.g., `adr: architecture/adr/0003-switch-to-grpc.md`, `feature: architecture/features/0003-switch-to-grpc.md`).
+     - **Crucially**, update the `adr:` and `feature:` fields within the YAML block to contain the **full relative paths** to the specific ADR and Feature Architecture documents being implemented (e.g., `adr: archflow/architecture/adr/0003-switch-to-grpc.md`, `feature: archflow/architecture/features/0003-switch-to-grpc.md`).
      - Define the implementation `steps`, specifying the `id`, `description`, `files` involved, `agentMode`, and initial `status` ("scheduled") for each.
    - Ensure the plan file adheres to the YAML structure defined in the template.
 5. **Commit Plan:** The Orchestrator delegates a final task to the *Intern* mode to commit the created/updated plan file, referencing the ADR number and feature name in the commit message.
