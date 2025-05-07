@@ -141,8 +141,9 @@ Execution proceeds step-by-step through the plan. The plan guides the *intent* o
 2. Load files needed for context
 3. Execute plan step
 4. Verify no compile errors - If there are compile errors, fix them.
-5. Complete step
-6. Commit step - Be sure to include ADR number and feature name in the commit messages.
+5. Verify no linter errors - If there are linter errors, fix them.
+6. Complete step
+7. Commit step - Be sure to include ADR number and feature name in the commit messages.
 
 + **Dependency Handling:** If an implementation step discovers the need for a dependency *not* identified during architecture, the agent assigned to that step (`agentMode`) is responsible for adding it to the appropriate manifest file (e.g., `package.json`, `requirements.txt`, `Cargo.toml`) and ensuring it's installed as part of completing the step's task.
 
