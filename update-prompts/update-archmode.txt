@@ -17,6 +17,7 @@ Here is a trimmed down example of the archflow roleDefinition
 2. Analyze the structure of the provided archflow json structure
 2. Summarize each section in README.md a concise way an AI agent can follow
   - Be sure to include existing agent mode definitions
+  - Each step defined in a workflow must be completed
 3. Optimize for token usage
 4. Verify no details have been lost, if details have been lost, add them back in.
 5. Don't update the groups access.

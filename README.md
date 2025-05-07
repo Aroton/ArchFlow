@@ -79,6 +79,7 @@ When the Orchestrator delegates a task using the `new_task` tool, the instructio
 *   **Plan Update (EXECUTING state only):** A mandatory instruction that the agent must update the `status` field in the relevant Plan Markdown file to `"in_progress"` upon starting the task and to `"completed"` upon successful completion. This status update **must** occur within the same operation/commit as the primary task execution. The valid status values are `scheduled | in_progress | completed`.
 *   **Completion:** An instruction to use the `attempt_completion` tool upon finishing. The `result` parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
 *   **Instruction Priority:** A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
+*   **Task Instructions:** Step by step instructions for the current task. These should be pulled from the workflow state directions (Architecting, Planning, Executing Verifying) These steps must be followed.
 *   **Mode Restriction:** A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call `attempt_completion`.
 
 ---
@@ -140,10 +141,14 @@ Execution proceeds step-by-step through the plan. The plan guides the *intent* o
 1. Update plan step status to in_progress
 2. Load files needed for context
 3. Execute plan step
-4. Verify no compile errors - If there are compile errors, fix them.
-5. Verify no linter errors - If there are linter errors, fix them.
-6. Complete step
-7. Commit step - Be sure to include ADR number and feature name in the commit messages.
+4. Execute build
+5. Verify no compile errors - If there are compile errors, fix them.
+6. Execute linter
+7. Verify no linter errors - If there are linter errors, fix them.
+8. Execute tests
+9. Verify no test failures - If there are test failures, fix them.
+10. Complete step (this step now encompasses successful build, lint, and tests)
+11. Commit step - Be sure to include ADR number and feature name in the commit messages.
 
 + **Dependency Handling:** If an implementation step discovers the need for a dependency *not* identified during architecture, the agent assigned to that step (`agentMode`) is responsible for adding it to the appropriate manifest file (e.g., `package.json`, `requirements.txt`, `Cargo.toml`) and ensuring it's installed as part of completing the step's task.
 
