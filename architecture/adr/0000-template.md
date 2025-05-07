@@ -3,7 +3,7 @@
 *Status*: {Proposed | Accepted | Superseded by #NNNN | Deprecated}
 *Date*: {YYYY-MM-DD}
 *Decision Makers*: @{github-handle1}, @{github-handle2}
-*Feature Architecture*: {New | Modifies} [./architecture/features/NNNN-feature-name.md]
+*Feature Architecture*: {New | Modifies | References} [./architecture/features/NNNN-feature-name.md](Feature Name)
 
 ---
 
