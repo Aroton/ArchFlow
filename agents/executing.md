@@ -89,8 +89,6 @@ delegate: true
 ```
 1. Set `status: in_progress`.
 2. Modify code, then **build → lint → test** until clean.
-3. Set `status: completed`.
+3. Set `status: complete`.
 4. **Commit** `<feature>: <summary> - <ADRFileName> - step<id>`.
-5. If highest‑level agent fails, `attempt_completion success: false`.
-6. Set `status: complete`.
-7. Complete task.
+5. Complete task.

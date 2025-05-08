@@ -93,7 +93,10 @@ delegate: false
 2. **Identify external dependencies** (record new ones).
 3. **Research codebase** (`plan-0002`, if needed).
 4. **Decompose work into atomic, testable steps**; assign `agentMode`.
-5. **Write plan** → `plans/NNNN-<name>.md` (`status: scheduled`).
+5. **Write plan** →  (`status: scheduled`).
+    * Copy `/archflow/plans/0000-template.md.md` → `/archflow/plans/NNNN-<adrName>.md`
+    * Fill sections
+    * Must embed *full relative paths* in ADR links.
 6. **Commit** Execute commit task (`plan-0003`)
 7. **Complete task**.
 

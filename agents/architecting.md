@@ -76,11 +76,13 @@ delgate: false
 1. **Gather context**
     * Load architecture docs
     * Delegate research task (`arch-0002`) if needed
-2. **Draft ADR**
-    * Copy `0000-template.md` → `NNNN-title.md`
+2. **Create ADR**
+    * Copy `/archflow/architectrue/0000-template.md` → `/archflow/architecture/NNNN-<adrName>.md`
     * Fill sections (Context, Decision, Consequences, …)
     * Must embed *full relative paths* in ADR links.
 3. **Update / Create Feature Architecture** per ADR.
+    * If new, copy `/archflow/features/template.md` → `/archflow/features/NNNN-<genericFeatureName>.md`
+    * Fill/Update sections
 4. **Update overall-architecture.md** with major impacts.
 5. **Commit** Execute commit task (`arch-0003`)
 6. **Complete task**
