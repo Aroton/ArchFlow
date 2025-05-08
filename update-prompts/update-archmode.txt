@@ -1,4 +1,8 @@
-@/README.md
+@/agents/archflow.md
+@/agents/architecting.md
+@/agents/executing.md
+@/agents/planning.md
+@/agents/verifying.md
 
 Here is a trimmed down example of the archflow roleDefinition
 
@@ -13,12 +17,9 @@ Here is a trimmed down example of the archflow roleDefinition
 }
 ```
 
-1. Analyze README.md
+1. Analyze provided agent files
 2. Analyze the structure of the provided archflow json structure
-2. Summarize each section in README.md a concise way an AI agent can follow
-  - Be sure to include existing agent mode definitions
-  - Each step defined in a workflow must be completed
-3. Optimize for token usage
-4. Verify no details have been lost, if details have been lost, add them back in.
-5. Don't update the groups access.
-6. Write the new mode archflow mode to "new_archflow_mode.json"
+3. Analyze depedencies between each agent
+4. Summarize each agent in a concise a concise way an AI agent can follow
+5. Verify no details have been lost, if details have been lost, add them back in.
+6. Write the new mode agent modes to "new_archflow_mode.json"

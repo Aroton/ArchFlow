@@ -79,7 +79,7 @@ When the Orchestrator delegates a task using the `new_task` tool, the instructio
 *   **Plan Update (EXECUTING state only):** A mandatory instruction that the agent must update the `status` field in the relevant Plan Markdown file to `"in_progress"` upon starting the task and to `"completed"` upon successful completion. This status update **must** occur within the same operation/commit as the primary task execution. The valid status values are `scheduled | in_progress | completed`.
 *   **Completion:** An instruction to use the `attempt_completion` tool upon finishing. The `result` parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
 *   **Instruction Priority:** A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
-*   **Task Instructions:** Step by step instructions for the current task. These should be pulled from the workflow state directions (Architecting, Planning, Executing Verifying) These steps must be followed.
+*   **Task Instructions:** Generic step by step instructions for the current task. These should be pulled from the workflow state directions (Architecting, Planning, Executing Verifying). DO NOT INCLUDE CODE. These steps must be followed.
 *   **Mode Restriction:** A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call `attempt_completion`.
 
 ---
@@ -88,22 +88,27 @@ When the Orchestrator delegates a task using the `new_task` tool, the instructio
 
 The typical flow for architectural changes is:
 
-1. **Create/Update ADR:**
+1. **Delegate new ARCHITECTING task:**
+2. **Load relevant architectural documents:**
+3. **Think about the architectural decision:**
+   - Delegate a new research task to the **researcher* mode.
+   - Analyze the current state of the code base
+   - Ask clarifying questions
+4. **Create/Update ADR:**
    - Copy `archflow/architecture/adr/0000-template.md` → `000N-title.md`.
    - Fill in the ADR details (Context, Decision, etc.).
-   - Crucially, specify if this ADR `New` or `Modifies` a Feature Architecture and provide the full relative path (e.g., `archflow/architecture/features/000N-feature-name.md`).
-2. **Create/Update Feature Architecture:**
+   - Crucially, specify if this ADR `New` or `Modifies` or `References` a Feature Architecture and provide the full relative path (e.g., `archflow/architecture/features/000N-feature-name.md`).
+5. **Create/Update Feature Architecture:**
+   - If the ADR references a feature architecture, skip update.
    - Based on the ADR, create a new Feature Architecture document in `archflow/architecture/features/` (using `archflow/architecture/feature-template.md`) or update the existing one linked in the ADR.
    - Detail the specific components, interactions, data flows, etc., for the feature.
-3. **Update Overall Architecture:**
-   - Review `archflow/architecture/overall-architecture.md`.
-   - If the changes introduced by the ADR and Feature Architecture significantly impact the high-level view (e.g., adding a major new service, changing core patterns), update the diagram and descriptions accordingly.
-4. **Identify & Verify Dependencies:**
-   - Based on the Feature Architecture, identify potential new external software dependencies (libraries, packages, etc.).
-   - Check the project's relevant package manager file (e.g., `package.json`, `requirements.txt`) to verify if these dependencies are already installed or part of the existing project setup.
-   - List any required *new* dependencies that need to be installed in the initial implementation plan.
-5. **Proceed to Planning:** The Orchestrator will initiate the PLANNING state next. The plan file itself is created during PLANNING.
-6. **Commit Architecture Documents:** The Orchestrator delegates a final task to the *Intern* mode to commit the created/updated architectural documents (ADR, Feature Arch, Overall Arch if changed), referencing the ADR number and feature name in the commit message.
+6. **Update Overall Architecture:**
+   - Analyze `archflow/architecture/overall-architecture.md`.
+   - Update the overall architecture document with major changes introduced by this change
+7. **Commit Architecture Documents**
+   - Delegates a final task to the *Intern* mode to commit the created/updated architectural documents (ADR, Feature Arch, Overall Arch if changed) referencing the ADR number and feature name in the commit message.
+8. **Complete ARChITECTING task:**
+9. **Proceed to Planning:** The Orchestrator will initiate the PLANNING state next. The plan file itself is created during PLANNING.
 
 *Note: All delegated tasks follow the guidelines outlined in the "Delegated Task Requirements" section.*
 
@@ -112,23 +117,36 @@ The typical flow for architectural changes is:
 ## 5 PLANNING Workflow
 
 The typical flow for planning is:
-1. **Review the architecture**
-   - Review the feature architecture and ADR.
-2. **Evaluate neccessary changes**
-   - Evaluate all required changes to achieve the ADR. Evaluate existing code if needed. If you need to research code, delegate a new research task to the **researcher* mode.
-   - Be sure to include all reference files.
-3. **Create a plan**
+1. **Delegate new PLANNING task**
+2. **Review the architecture**
+   - Analyze the feature architecture
+   - Analyze the ADR
+3. **Identify & Verify Depdencies:**
+   - Based on the Feature Architecture, identify potential new external software dependencies (libraries, packages, etc.).
+   - Check the project's relevant package manager file (e.g., `package.json`, `requirements.txt`) to verify if these dependencies are already installed or part of the existing project setup.
+   - List any required *new* dependencies that need to be installed in the initial implementation plan.
+4. **Research Code Base:**
+   - Delegate a new research task to the **researcher* mode.
+   - Analyze all relevant code
+5. **Evaluate neccessary changes**
+   - Evaluate all required changes to achieve the ADR.
+   - Changes should be **atomic, independently verifiable steps**
+   - Think about all files that need to be created
+6. **Create a plan**
    - Decompose the work into **atomic, independently verifiable steps** that can be completed in logical order. Each step should represent a small, incremental change that ideally leaves the system in a stable, shippable state.
    - **Crucially, ensure each step results in a testable state.** For UI changes, this means the modification should be visible and verifiable in the UI after the step is completed.
    - **Note:** The plan defines the *what* (intent, logic, files to modify) for each step, not the *how*. Avoid including detailed code snippets; the executing agent is responsible for implementation based on the plan's guidance.
-4. **Create and Write the Plan File**
+   - Each step in the plan should have the application code and corresponding unit tests (if applicable).
+   - Think about the complexity of each step, identify which agent mode (`senior`, `midlevel`, `junior`, `intern`) is best suited to execute it.
+7. **Create and Write the Plan File**
    - Copy the template `plans/0000-template.md` to a new file named `plans/NNNN-plan-name.md` (where `NNNN` matches the corresponding ADR number).
    - Edit the new plan file (`plans/NNNN-plan-name.md`):
      - Update the placeholder title and description at the top.
      - **Crucially**, update the `adr:` and `feature:` fields within the YAML block to contain the **full relative paths** to the specific ADR and Feature Architecture documents being implemented (e.g., `adr: archflow/architecture/adr/0003-switch-to-grpc.md`, `feature: archflow/architecture/features/0003-switch-to-grpc.md`).
      - Define the implementation `steps`, specifying the `id`, `description`, `files` involved, `agentMode`, and initial `status` ("scheduled") for each.
    - Ensure the plan file adheres to the YAML structure defined in the template.
-5. **Commit Plan:** The Orchestrator delegates a final task to the *Intern* mode to commit the created/updated plan file, referencing the ADR number and feature name in the commit message.
+8. **Commit Plan:** The Orchestrator delegates a final task to the *Intern* mode to commit the created/updated plan file, referencing the ADR number and feature name in the commit message.
+9. **Complete PLANNING task**
 
 The `status` field for each step is updated by the assigned agent during the EXECUTING state. This allows the workflow loop to intelligently resume from the last incomplete step.
 + Important: The agent assigned to a step (`agentMode`) is responsible for *both* executing the task *and* updating the `status` field within the same operation (typically the commit). Delegating status updates separately is incorrect behavior.
@@ -138,17 +156,21 @@ The `status` field for each step is updated by the assigned agent during the EXE
 ## 6 EXECUTING Workflow
 Execution proceeds step-by-step through the plan. The plan guides the *intent* of each step; the assigned agent (`agentMode`) is responsible for determining the specific code implementation. **Plans should not contain detailed code examples.** Each step follows this workflow:
 
-1. Update plan step status to in_progress
-2. Load files needed for context
-3. Execute plan step
-4. Execute build
-5. Verify no compile errors - If there are compile errors, fix them.
-6. Execute linter
-7. Verify no linter errors - If there are linter errors, fix them.
-8. Execute tests
-9. Verify no test failures - If there are test failures, fix them.
-10. Complete step (this step now encompasses successful build, lint, and tests)
-11. Commit step - Be sure to include ADR number and feature name in the commit messages.
+1. Read next available task
+2. Delegate new EXECUTING task
+3. Update plan step status to in_progress
+4. Load files needed for context
+5. Execute plan step
+6. Execute build
+7. Verify no compile errors - If there are compile errors, fix them.
+8. Execute linter
+9. Verify no linter errors - If there are linter errors, fix them.
+10. Execute tests
+11. Verify no test failures - If there are test failures, fix them.
+12. Complete step (this step now encompasses successful build, lint, and tests)
+13. Commit step - Be sure to include ADR number and feature name in the commit messages.
+14. Complete EXECUTING task
+15. Repeat until all tasks complete
 
 + **Dependency Handling:** If an implementation step discovers the need for a dependency *not* identified during architecture, the agent assigned to that step (`agentMode`) is responsible for adding it to the appropriate manifest file (e.g., `package.json`, `requirements.txt`, `Cargo.toml`) and ensuring it's installed as part of completing the step's task.
 
@@ -157,6 +179,10 @@ Execution proceeds step-by-step through the plan. The plan guides the *intent* o
 Once all plan steps are marked `completed`, the Orchestrator initiates the VERIFYING state:
 
 1.  **Delegate Verification:** The Orchestrator delegates the verification task to the *Senior* agent (or triggers an automated test harness if configured). Instructions should specify the scope of verification (e.g., run unit tests, integration tests, linters, perform specific manual checks based on the feature).
+2.  **Code Review:**
+   - Verify all tasks have been completed as defined in the ADR and feature architecture
+   - Verify all code changes conform to best practice coding standards
+   - Anaylze code and verify all code changes business logic matches intended logic
 2.  **Analyze Results:** The Orchestrator receives the verification report (e.g., test results, linting output, Senior agent's assessment).
 3.  **Handle Outcome:**
     *   **Success:** If verification passes, mark the plan as verified (e.g., add `verified: true` to the Plan Markdown's YAML block or update a status field) and commit this change. The overall workflow for this plan is now complete.
@@ -172,5 +198,5 @@ Once all plan steps are marked `completed`, the Orchestrator initiates the VERIF
 * **Keep plans small** – split large features into multiple plans so checkpoints stay meaningful.
 * **Reference everything** – ADR number in commit messages, plan in pull-request description.
 * **Restart fearlessly** – if an agent stalls, fix the issue and run `roocode resume --plan <your-plan.md>`. The workflow will pick up from the last incomplete step based on the status described in the Markdown plan.
-
+* **Commit Format** - All commits MUST be in the format `{featureName}: {changeDescription} - {ADRNumber} - {planStepId}` - if values don't exist, leave them blank.
 ---
