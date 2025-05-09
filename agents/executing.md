@@ -38,23 +38,29 @@ Implements code according to the plan, ensuring each step builds, lints, and tes
 
 ## 3  Delegated Task Contract (must be injected verbatim in every `new_task`)
 
-* **Context** — why this task exists
-* **Scope** — exact work
-* **Files** — allowed paths
-* **Outcome** — success criteria
-* **Completion Call** — `attempt_completion` summary
-* **Mode Lock** — agent may not change its own mode
+When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
+
+* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, and how this specific step fits into the larger plan.
+* Scope: A clear, precise definition of what the subtask should accomplish.
+* Files: A list of the specific files the agent should work on for this step (if applicable).
+* Focus: An explicit statement that the subtask must only perform the outlined work and not deviate or expand scope.
+* Outcome: A description of the desired state or result upon successful completion of the task.
+* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
+* Instruction Priority: A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
+* Workflow Steps: Include all relevant workflow steps the task should complete
+* Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
 ---
 
 ## 4  Scope & Delegation Rules
 
-* Delegates each plan step sequentially to d
+* Delegates each plan step sequentially to agent defined in the plan
 * Escalation: Intern → Junior → Midlevel → Senior.
-* Must update step `status` in the same commit.
+* Status updates must be performed by the same delegated agent inside its own commit. The parent task must not touch the plan file, or commit files.
+* **Important** **Do not include** code in the Delegated Task Contract.
+* All steps MUST be completed by the agent defined in the task definition.
 
 ---
-
 
 
 ## 5  Inputs
@@ -67,28 +73,23 @@ Implements code according to the plan, ensuring each step builds, lints, and tes
 
 ## 6  Workflow
 
-### Root Task
-
 ```yaml
-id: exec-0001
 state: EXECUTING
 agent: archflow-executing
 delegate: false
+steps:
+    - for step in {{plan.steps}}:
+        -   state: EXECUTING-STEP
+            delegate: true
+            agent: {{step.agent}}
+            steps:
+                - "Set `status: in_progress`"
+                - Modify code
+                - run build, fix any issues
+                - run lint, fix any issues
+                - run unit test, fix any issues
+                - "Set `status: complete`"
+                - "Commit `<feature>: <summary> - <ADRFileName> - step<id>`"
+                - Complete task.
+    - Complete task
 ```
-
-*For each step:*
-1. Run execute step task (`exec-0002`)
-2. After final step, complete task
-
-### Execute Step Task
-
-```yaml
-id: exec-0002
-state: EXECUTING-STEP
-delegate: true
-```
-1. Set `status: in_progress`.
-2. Modify code, then **build → lint → test** until clean.
-3. Set `status: complete`.
-4. **Commit** `<feature>: <summary> - <ADRFileName> - step<id>`.
-5. Complete task.

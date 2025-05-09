@@ -37,18 +37,26 @@ Final quality gate—runs verification and marks the plan verified.
 
 ## 3  Delegated Task Contract (must be injected verbatim in every `new_task`)
 
-* **Context** — why this task exists
-* **Scope** — exact work
-* **Files** — allowed paths
-* **Outcome** — success criteria
-* **Completion Call** — `attempt_completion` summary
-* **Mode Lock** — agent may not change its own mode
+When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
+
+* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, and how this specific step fits into the larger plan.
+* Scope: A clear, precise definition of what the subtask should accomplish.
+* Files: A list of the specific files the agent should work on for this step (if applicable).
+* Focus: An explicit statement that the subtask must only perform the outlined work and not deviate or expand scope.
+* Outcome: A description of the desired state or result upon successful completion of the task.
+* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
+* Instruction Priority: A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
+* Workflow Steps: Include all relevant workflow steps the task should complete
+* Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
+
+**Important** Do not include code snippets in the task contract.
 
 ---
 
 ## 4  Scope & Delegation Rules
 
 * Runs automated + manual checks; cannot delegate further.
+* **Important** **Do not include** code in the Delegated Task Contract.
 * On failure, return `success: false`; Orchestrator decides next steps.
 
 ---
@@ -65,29 +73,16 @@ Final quality gate—runs verification and marks the plan verified.
 ### Root Task
 
 ```yaml
-id: verify-0001
 state: VERIFYING
 agent: archflow-verifying
 delegate: false
+steps:
+    - Run verification suite (unit, integration, linter)
+    - Run code review:
+        - Iterate through all diffs
+        - Validate code conforms to code standards
+        - validate business logic matches plan
+    - Pass?:
+        - "yes - add `verified: true` to plan, commit, `attempt_completion success: true`"
+        - "no - `attempt_completion success: false` with details."
 ```
-
-1. **Run verification suite** (unit, integration, linter).
-2. Run code review task (`verify-0002`)
-2. **Pass?**
-
-   * Yes → add `verified: true` to plan, commit, `attempt_completion success: true`.
-   * No  → `attempt_completion success: false` with details.
-
-### Code Review Task
-
-```yaml
-id: verify-0002
-state: VERIFYING-CODE-REVIEW
-agent: archflow-verifying
-delegate: false
-```
-
-1. **Iterate through every diff**
-2. **Validate code is up to code standards**
-3. **Validate business logic matches plan**
-4. **Complete**

@@ -53,12 +53,17 @@ The following are the available agents for execution.
 
 ## 4  Delegated Task Contract (must be injected verbatim in every `new_task`)
 
-* **Context** — why this task exists
-* **Scope** — exact work
-* **Files** — allowed paths
-* **Outcome** — success criteria
-* **Completion Call** — `attempt_completion` summary
-* **Mode Lock** — agent may not change its own mode
+When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
+
+* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, and how this specific step fits into the larger plan.
+* Scope: A clear, precise definition of what the subtask should accomplish.
+* Files: A list of the specific files the agent should work on for this step (if applicable).
+* Focus: An explicit statement that the subtask must only perform the outlined work and not deviate or expand scope.
+* Outcome: A description of the desired state or result upon successful completion of the task.
+* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
+* Instruction Priority: A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
+* Workflow Steps: Include all relevant workflow steps the task should complete
+* Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
 ---
 
@@ -67,6 +72,8 @@ The following are the available agents for execution.
 * Produces a markdown plan in `plans/` with atomic, testable steps.
 * May delegate to `researcher` for code inspection.
 * Must NOT include code snippets inside the plan.
+* status can be (`schedule`, `in_progress`, `complete`)
+* **Important** **Do not include** code in the Delegated Task Contract.
 
 ---
 
@@ -83,45 +90,27 @@ The following are the available agents for execution.
 ### Root Task
 
 ```yaml
-id: plan-0001
 state: PLANNING
 agent: archflow-planning
 delegate: false
+steps:
+    - Review architecture docs
+    - Identify external dependencies
+    - Research code base:
+        state: PLANNING-RESEARCHING
+        agent: researcher
+        delegate: true
+            - Load all files provided in context
+            - Meet objectives of the delgated task context
+            - Complete task
+    - decompose work into steps:
+        - Each step should be standalone, shippable, and buildable
+        - Each step should include tests
+        - Analyze the work and assign the appropriate agentMode (intern, junior, midlevel, senior)
+    - write plan:
+        - Copy `/archflow/plans/0000-template.md.md` → `/archflow/plans/NNNN-<adrName>.md`
+        - Fill sections - (`status: scheduled`)
+        - Must embed *full relative paths* in ADR links.
+    - "commit `<feature>: <summary> - <ADRFileName>`"
+    - complete task
 ```
-
-1. **Review architecture docs**.
-2. **Identify external dependencies** (record new ones).
-3. **Research codebase** (`plan-0002`, if needed).
-4. **Decompose work into atomic, testable steps**; assign `agentMode`.
-5. **Write plan** →  (`status: scheduled`).
-    * Copy `/archflow/plans/0000-template.md.md` → `/archflow/plans/NNNN-<adrName>.md`
-    * Fill sections
-    * Must embed *full relative paths* in ADR links.
-6. **Commit** Execute commit task (`plan-0003`)
-7. **Complete task**.
-
-### Researching Task
-
-```yaml
-id: plan-0002
-state: PLANNING-RESEARCHING
-agent: researcher
-delegate: true
-```
-
-1. **Load all files provided in context**
-2. **Meet objectives of the delgated task context**
-3. **Complete task**
-
-
-### Code Commit Task
-
-```yaml
-id: plan-0003
-state: PLANNING-COMMIT
-agent: archflow-planning
-delegate: false
-```
-1. **Add all created/updated files to git**
-2. **Commit with the format of** `<feature>: <summary> - <ADRFileName>`
----

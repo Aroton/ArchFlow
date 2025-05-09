@@ -38,16 +38,19 @@ The architecting workflow goes through a series of steps to create new architect
 
 ---
 
-## 3  Delegated Task Contract
+## 3  Delegated Task Contract (must be injected verbatim in every `new_task`)
 
-Every `new_task` **must** supply:
+When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
 
-* **Context** — What led to this task.
-* **Scope** — Precise definition of work.
-* **Files** — Paths that may be modified.
-* **Outcome** — Success criteria.
-* **Completion Call** — `attempt_completion` with concise result summary.
-* **Mode Lock** — The agent may not change its own mode.
+* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, and how this specific step fits into the larger plan.
+* Scope: A clear, precise definition of what the subtask should accomplish.
+* Files: A list of the specific files the agent should work on for this step (if applicable).
+* Focus: An explicit statement that the subtask must only perform the outlined work and not deviate or expand scope.
+* Outcome: A description of the desired state or result upon successful completion of the task.
+* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
+* Instruction Priority: A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
+* Workflow Steps: Include all relevant workflow steps the task should complete
+* Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
 ---
 
@@ -56,6 +59,7 @@ Every `new_task` **must** supply:
 * Creates/updates ADRs, Feature docs, Overall Architecture, and commits changes.
 * May delegate ONLY to `Researcher`.
 * On failure, report back; do not escalate internally.
+* **Important** **Do not include** code in the Delegated Task Contract.
 
 ## 5  Inputs
 * High‑level feature description (from Orchestrator)
@@ -67,50 +71,31 @@ Every `new_task` **must** supply:
 ### Root Task
 
 ```yaml
-id: arch-0001
 state: ARCHITECTING
 agent: archflow-architecting
-delgate: false
-```
-
-1. **Gather context**
-    * Load architecture docs
-    * Delegate research task (`arch-0002`) if needed
-2. **Create ADR**
-    * Copy `/archflow/architectrue/0000-template.md` → `/archflow/architecture/NNNN-<adrName>.md`
-    * Fill sections (Context, Decision, Consequences, …)
-    * Must embed *full relative paths* in ADR links.
-3. **Update / Create Feature Architecture** per ADR.
-    * If new, copy `/archflow/features/template.md` → `/archflow/features/NNNN-<genericFeatureName>.md`
-    * Fill/Update sections
-4. **Update overall-architecture.md** with major impacts.
-5. **Commit** Execute commit task (`arch-0003`)
-6. **Complete task**
-
-
-### Researching Task
-
-```yaml
-id: arch-0002
-state: ARCHITECTING-RESEARCHING
-agent: researcher
-delegate: true
-```
-
-1. **Load all files provided in context**
-2. **Meet objectives of the delgated task context**
-3. **Complete task**
-
-
-### Code Commit Task
-
-```yaml
-id: arch-0003
-state: ARCHITECTING-COMMIT
-agent: archflow-architecting
 delegate: false
+steps:
+    - Gather Context:
+        - Load architecture docs
+        - Research Code:
+            state: ARCHITECTING-RESEARCHING
+            agent: researcher
+            delegate: true
+            steps:
+                - Load all files provided in context
+                - Meet objectives of the delegated task context
+                - Complete task
+    - Create ADR:
+        - Copy `/archflow/architectrue/0000-template.md` → `/archflow/architecture/NNNN-<adrName>.md`
+        - Ask any clarifying questions
+        - "Fill or update sections in `/archflow/architecture/NNNN-<adrName>.md` - Must embed *full relative paths* in ADR links."
+    - Update or create feature architecture:
+        - If new, copy `/archflow/features/template.md` → `/archflow/features/NNNN-<genericFeatureName>.md`
+        - Analyze feature architecture and detect any differences with the ADR
+        - Fill or update sections in `/archflow/features/NNNN-<genericFeatureName>.md`
+    - Update overall architecture:
+        - Analyze `/archflow/architecture/overall-architecture.md`
+        - Analzye `/archflow/architecture/NNNN-<adrName>.md`
+        - Update overall-architecure.md with any major changes
+    - "commit `<feature>: <summary> - <ADRFileName>`"
 ```
-
-1. **Add all created/updated files to git**
-2. **Commit with the format of** `<feature>: <summary> - <ADRFileName>`
----
