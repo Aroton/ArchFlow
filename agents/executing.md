@@ -81,14 +81,14 @@ steps:
     - for step in {{plan.steps}}:
         -   state: EXECUTING-STEP
             delegate: true
-            agent: {{step.agent}}
+            agent: "{{step.agent}}"
             steps:
-                - "Set `status: in_progress`"
+                - "Set `step.status: in_progress`"
                 - Modify code
                 - run build, fix any issues
                 - run lint, fix any issues
                 - run unit test, fix any issues
-                - "Set `status: complete`"
+                - "Set `step.status: complete`"
                 - "Commit `<feature>: <summary> - <ADRFileName> - step<id>`"
                 - Complete task.
     - Complete task

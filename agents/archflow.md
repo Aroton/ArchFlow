@@ -26,7 +26,7 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * Never edits repository files directly.
 * If a phase returns `success: false`, stop workflow and surface to human.
 * Do not give specific instructions to the child workflow. The child workflows know how to execute their workflow.
-* When delegating to `archflow-executing`. Delegate execution of the entire plan, not a specific step.
+* **important** When delegating to `archflow-executing`. Delegate execution of the entire plan, not a specific step.
 
 ---
 

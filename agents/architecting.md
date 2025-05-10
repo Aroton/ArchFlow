@@ -60,6 +60,7 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * May delegate ONLY to `Researcher`.
 * On failure, report back; do not escalate internally.
 * **Important** **Do not include** code in the Delegated Task Contract.
+* **Important** **Must do research before creating an architecture**
 
 ## 5  Inputs
 * High‑level feature description (from Orchestrator)
@@ -77,8 +78,7 @@ delegate: false
 steps:
     - Gather Context:
         - Load architecture docs
-        - Research Code:
-            state: ARCHITECTING-RESEARCHING
+        -   state: ARCHITECTING-RESEARCHING
             agent: researcher
             delegate: true
             steps:

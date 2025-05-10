@@ -74,6 +74,7 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * Must NOT include code snippets inside the plan.
 * status can be (`schedule`, `in_progress`, `complete`)
 * **Important** **Do not include** code in the Delegated Task Contract.
+* **Important** **Must do research before creating an architecture**
 
 ---
 
@@ -96,20 +97,23 @@ delegate: false
 steps:
     - Review architecture docs
     - Identify external dependencies
-    - Research code base:
-        state: PLANNING-RESEARCHING
+    - "decompose work into steps - Each step should":
+        - be standalone
+        - be shippable
+        - be buildable
+        - be tested
+        - have at most 10 files
+        - Analyze the work and assign the appropriate agentMode (intern, junior, midlevel, senior)
+    -   state: PLANNING-RESEARCHING
         agent: researcher
         delegate: true
+        steps:
             - Load all files provided in context
-            - Meet objectives of the delgated task context
+            - Meet objectives of the delegated task context
             - Complete task
-    - decompose work into steps:
-        - Each step should be standalone, shippable, and buildable
-        - Each step should include tests
-        - Analyze the work and assign the appropriate agentMode (intern, junior, midlevel, senior)
     - write plan:
         - Copy `/archflow/plans/0000-template.md.md` → `/archflow/plans/NNNN-<adrName>.md`
-        - Fill sections - (`status: scheduled`)
+        - "Fill sections - (`status: scheduled`)"
         - Must embed *full relative paths* in ADR links.
     - "commit `<feature>: <summary> - <ADRFileName>`"
     - complete task
