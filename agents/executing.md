@@ -16,7 +16,7 @@ Implements code according to the plan, ensuring each step builds, lints, and tes
     ├── architecture/
     │   ├── overall-architecture.md # High-level system view
     │   ├── features/             # Detailed feature architectures
-    │   │   └── NNNN-feature-name.md # Example feature doc
+    │   │   └── YYYYMMDDHHMMSS-feature-name.md # Example feature doc
     │   ├── adr/                  # Architecture Decision Records (ADR)
     │   │   ├── 0000-template.md  # Copy & rename for each new decision
     │   │   ├── 0001-...md        # First accepted ADR

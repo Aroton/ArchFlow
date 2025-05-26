@@ -17,7 +17,7 @@ Converts architecture artifacts into an executable implementation plan.
     ├── architecture/
     │   ├── overall-architecture.md # High-level system view
     │   ├── features/             # Detailed feature architectures
-    │   │   └── NNNN-feature-name.md # Example feature doc
+    │   │   └── YYYYMMDDHHMMSS-feature-name.md # Example feature doc
     │   ├── adr/                  # Architecture Decision Records (ADR)
     │   │   ├── 0000-template.md  # Copy & rename for each new decision
     │   │   ├── 0001-...md        # First accepted ADR
@@ -112,8 +112,9 @@ steps:
             - Meet objectives of the delegated task context
             - Complete task
     - write plan:
-        - Copy `/archflow/plans/0000-template.md.md` → `/archflow/plans/NNNN-<adrName>.md`
-        - "Fill sections - (`status: scheduled`)"
+        - Copy `/archflow/plans/0000-template.md` → `/archflow/plans/YYYYMMDDHHMMSS-<adrName>.md`
+        - Fill in all sections - follow the template file
+        - "Update (`status: scheduled`)"
         - Must embed *full relative paths* in ADR links.
     - "commit `<feature>: <summary> - <ADRFileName>`"
     - complete task

@@ -17,7 +17,7 @@ The architecting workflow goes through a series of steps to create new architect
     ├── architecture/
     │   ├── overall-architecture.md # High-level system view
     │   ├── features/             # Detailed feature architectures
-    │   │   └── NNNN-feature-name.md # Example feature doc
+    │   │   └── YYYYMMDDHHMMSS-feature-name.md # Example feature doc
     │   ├── adr/                  # Architecture Decision Records (ADR)
     │   │   ├── 0000-template.md  # Copy & rename for each new decision
     │   │   ├── 0001-...md        # First accepted ADR
@@ -86,16 +86,16 @@ steps:
                 - Meet objectives of the delegated task context
                 - Complete task
     - Create ADR:
-        - Copy `/archflow/architectrue/0000-template.md` → `/archflow/architecture/NNNN-<adrName>.md`
+        - Copy `/archflow/architectrue/0000-template.md` → `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md`
         - Ask any clarifying questions
-        - "Fill or update sections in `/archflow/architecture/NNNN-<adrName>.md` - Must embed *full relative paths* in ADR links."
+        - "Fill or update sections in `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md` - Must embed *full relative paths* in ADR links."
     - Update or create feature architecture:
-        - If new, copy `/archflow/features/template.md` → `/archflow/features/NNNN-<genericFeatureName>.md`
+        - If new, copy `/archflow/features/template.md` → `/archflow/features/YYYYMMDDHHMMSS-<genericFeatureName>.md`
         - Analyze feature architecture and detect any differences with the ADR
-        - Fill or update sections in `/archflow/features/NNNN-<genericFeatureName>.md`
+        - Fill or update sections in `/archflow/features/YYYYMMDDHHMMSS-<genericFeatureName>.md`
     - Update overall architecture:
         - Analyze `/archflow/architecture/overall-architecture.md`
-        - Analzye `/archflow/architecture/NNNN-<adrName>.md`
+        - Analzye `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md`
         - Update overall-architecure.md with any major changes
     - "commit `<feature>: <summary> - <ADRFileName>`"
 ```
