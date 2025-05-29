@@ -41,3 +41,27 @@ The ArchFlow system is composed of the following key agents:
 Each agent operates based on a "Delegated Task Contract" which defines the context, scope, allowed files, outcome criteria, and completion call for any task it undertakes.
 
 For detailed information on each agent's specific responsibilities, inputs, outputs, and workflow, please refer to their respective markdown files linked above.
+
+
+## Suggested Model Usage
+This is just some general guidance on model usage with temperatures.
+
+### Multi-Agent Workflow Model Recommendations
+
+| Stage | Role | Model | Temperature | Thinking Mode | Reasoning |
+|-------|------|-------|-------------|---------------|-----------|
+| **Orchestration** | Outside Agent (Delegator) | Gemini Flash 2.5 | 0.3 | Yes | Needs flexibility for workflow adaptation, thinking helps with complex multi-step reasoning |
+| **Architecture** | Architect | Claude Sonnet 4 | 0.3-0.4 | N/A (Artifacts) | Excellent structured documentation, strong ADR creation, comprehensive design exploration |
+| **Planning** | Planner | Gemini 2.5 Pro | 0.2-0.3 | Yes | Precise step-by-step processes, clear instructions for coding agents, structured deliverables |
+| **Execution** | Executing Agent | Claude Sonnet 4 | 0.2 | No | Reliable delegation decisions, cost-effective, strong task management |
+| **Coding** | Senior | Gemini 2.5 Pro | 0.1-0.2 | Yes (complex tasks) | Best coding benchmarks (63.8% SWE-bench), handles complex architecture |
+| **Coding** | Midlevel | GPT-4.1 | 0.1-0.2 | No | Strong coding performance (52-54.6% SWE-bench), good code reviews |
+| **Coding** | Junior | Claude Sonnet 4 | 0.1 | No | Excellent instruction following, good documentation, cost-effective |
+| **Coding** | Intern | Gemini 2.5 Flash | 0.0-0.1 | Yes | Most cost-effective, thinking helps with learning, simple tasks |
+| **Verification** | Verify Agent | Gemini 2.5 Pro | 0.1-0.2 | Yes | Top coding accuracy, excellent bug detection, thorough verification |
+
+### Key Notes:
+- **Cost Efficiency Order:** Flash < Sonnet 4 < GPT-4.1 < Gemini 2.5 Pro
+- **Thinking Mode:** Enable for complex reasoning, workflow decisions, and verification
+- **Artifacts:** Used for documentation-heavy stages (Architecture, Planning)
+- **Temperature Logic:** Lower for execution/verification, moderate for creative/planning tasks
