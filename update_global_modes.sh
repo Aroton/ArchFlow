@@ -40,7 +40,7 @@ if [ -z "$YQ_ERROR_LOG" ] || [ ! -f "$YQ_ERROR_LOG" ]; then
 fi
 
 # Attempt to convert and write, redirecting yq's stderr to the log file
-yq -P "$SOURCE_FILE" > "$TARGET_FILE" 2> "$YQ_ERROR_LOG"
+yq -p=json "$SOURCE_FILE" > "$TARGET_FILE" 2> "$YQ_ERROR_LOG"
 
 # Check if copy was successful
 # Check the exit status of the yq command
