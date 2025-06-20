@@ -1,15 +1,15 @@
-# Planning Workflow
+# Planning Workflow
 
 ```yaml
 slug: archflow-planning
-name: ArchFlow - Planning
+name: ArchFlow - Planning
 groups: ['read', 'edit', 'command']
 source: 'global'
 ```
 
 Converts architecture artifacts into an executable implementation plan.
 
-## 1  Folder Layout
+## 1  Folder Layout
 
 ```
 .
@@ -28,18 +28,18 @@ Converts architecture artifacts into an executable implementation plan.
 ```
 ---
 
-## 2  Key Artifacts
+## 2  Key Artifacts
 
 | Artifact                   | Purpose              |
 | -------------------------- | -------------------- |
 | ADR + Feature Architecture | Design source        |
-| Plan file                  | Outputof  this phase |
+| Plan file                  | Output of this phase |
 
 ---
 
 ## 3 Agent Mode Descriptions & Capabilities
 
-The following are the available agents for execution.
+### Roo Code Agent Modes
 
 *   **Architect:** Handles high-level design and planning (ARCHITECTING, PLANNING states). Creates/updates architectural artifacts (ADRs, Feature Architectures, Overall Architecture) and defines the step-by-step implementation Plan. Can be re-engaged if the planned approach encounters issues.
 *   **Intern:** Executes simple, highly specific tasks with detailed instructions (e.g., function names, parameters, purpose provided). Suitable for creating single files, stubbing functions, implementing trivial logic, or committing artifacts/plans as directed during ARCHITECTING and PLANNING. Requires precise guidance for code-writing tasks.
@@ -49,9 +49,21 @@ The following are the available agents for execution.
 *   **Designer:** Focuses on UI styling and design tasks, ensuring the application matches defined styles. Should report non-styling issues rather than attempting to fix them.
 *   **Researcher:** Gathers specific information about the codebase (e.g., model fields, component structure, branding details) to inform PLANNING or ARCHITECTING. Can be instructed to search the web if necessary.
 
+### Claude Code Model Selection
+
+In Claude Code, model selection is simpler:
+*   **Claude Opus:** For complex tasks, architectural decisions, and comprehensive implementations
+*   **Claude Sonnet:** For straightforward tasks, simple implementations, and routine operations
+
+The user may be prompted to switch models based on task complexity.
+
 ---
 
-## 4  Delegated Task Contract (must be injected verbatim in every `new_task`)
+## 4  Implementation Details
+
+### Roo Code Implementation
+
+#### Delegated Task Contract (must be injected verbatim in every `new_task`)
 
 When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
 
@@ -65,31 +77,39 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * Workflow Steps: Include all relevant workflow steps the task should complete
 * Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
----
-
-## 5  Scope & Delegation Rules
+#### Scope & Delegation Rules
 
 * Produces a markdown plan in `plans/` with atomic, testable steps.
 * May delegate to `researcher` for code inspection.
 * Must NOT include code snippets inside the plan.
-* status can be (`schedule`, `in_progress`, `complete`)
+* Status can be (`scheduled`, `in_progress`, `complete`)
 * **Important** **Do not include** code in the Delegated Task Contract.
-* **Important** **Must do research before creating an architecture**
+* **Important** **Must do research before creating a plan**
+
+### Claude Code Implementation
+
+In Claude Code, the planning phase:
+* Uses TodoWrite to track progress through planning steps
+* Performs code analysis using Grep/Glob tools directly
+* Creates a detailed implementation plan with atomic steps
+* Instead of assigning agent modes, may suggest model complexity (Opus/Sonnet)
+* Commits the plan file with appropriate message
+* Does not delegate tasks - all analysis is done within the command
 
 ---
 
-## 6  Inputs
+## 5  Inputs
 
 * ADR + Feature doc paths
 * Existing codebase
-* Delegated Task Contract
+* In Roo Code: Delegated Task Contract
+* In Claude Code: Path to ADR/Feature docs via command arguments
 
 ---
 
-## 7  Workflow
+## 6  Workflow
 
-### Root Task
-
+### Roo Code Workflow
 ```yaml
 state: PLANNING
 agent: archflow-planning
@@ -118,4 +138,30 @@ steps:
         - Must embed *full relative paths* in ADR links.
     - "commit `<feature>: <summary> - <ADRFileName>`"
     - complete task
+```
+
+### Claude Code Workflow
+```yaml
+state: PLANNING
+agent: claude
+delegate: false
+steps:
+    - Use TodoWrite to create task list for planning phase
+    - Review architecture docs (ADR and Feature Architecture)
+    - Identify external dependencies using package.json analysis
+    - Decompose work into atomic steps:
+        - Each step should be standalone and testable
+        - Each step should modify at most 10 files
+        - Suggest model complexity for each step (Opus/Sonnet)
+    - Research codebase:
+        - Use Grep/Glob to analyze existing patterns
+        - Identify impacted files and dependencies
+        - Understand current implementation approaches
+    - Write plan:
+        - Copy `archflow/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<adrName>.md`
+        - Fill all sections following template structure
+        - Set all steps to `status: scheduled`
+        - Include full relative paths in all references
+    - Commit plan with descriptive message
+    - Mark all todos as completed
 ```

@@ -1,14 +1,14 @@
-# Verifying Workflow
+# Verifying Workflow
 
 ```yaml
 slug: archflow-verifying
-name: ArchFlow - Verifying
+name: ArchFlow - Verifying
 groups: ['read', 'edit', 'command']
 source: 'global'
 ```
 Final quality gate—runs verification and marks the plan verified.
 
-## 1 Folder Layout
+## 1 Folder Layout
 
 ```
 .
@@ -27,7 +27,7 @@ Final quality gate—runs verification and marks the plan verified.
 ```
 ---
 
-## 2  Key Artifacts
+## 2  Key Artifacts
 
 | Artifact                          | Purpose             |
 | --------------------------------- | ------------------- |
@@ -35,7 +35,11 @@ Final quality gate—runs verification and marks the plan verified.
 
 ---
 
-## 3  Delegated Task Contract (must be injected verbatim in every `new_task`)
+## 3  Implementation Details
+
+### Roo Code Implementation
+
+#### Delegated Task Contract (must be injected verbatim in every `new_task`)
 
 When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
 
@@ -51,27 +55,37 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 
 **Important** Do not include code snippets in the task contract.
 
----
-
-## 4  Scope & Delegation Rules
+#### Scope & Delegation Rules
 
 * Runs automated + manual checks; cannot delegate further.
 * **Important** **Do not include** code in the Delegated Task Contract.
 * On failure, return `success: false`; Orchestrator decides next steps.
 
+### Claude Code Implementation
+
+In Claude Code, the verifying phase:
+* Uses TodoWrite to track verification tasks
+* Runs comprehensive test suites and validation
+* Performs code review comparing implementation to plan
+* Updates plan file with verification status
+* Reports issues clearly to the user
+* Does not delegate - all verification is done within the command
+* Provides detailed report of verification results
+
 ---
 
-## 5  Inputs
+## 4  Inputs
 
 * Path to completed plan file
 * Current repository state
+* In Roo Code: Delegated Task Contract
+* In Claude Code: Path to plan file via command arguments
 
 ---
 
-## 6  Workflow
+## 5  Workflow
 
-### Root Task
-
+### Roo Code Workflow
 ```yaml
 state: VERIFYING
 agent: archflow-verifying
@@ -85,4 +99,34 @@ steps:
     - Pass?:
         - "yes - add `verified: true` to plan, commit, `attempt_completion success: true`"
         - "no - `attempt_completion success: false` with details."
+```
+
+### Claude Code Workflow
+```yaml
+state: VERIFYING
+agent: claude
+delegate: false
+steps:
+    - Use TodoWrite to create verification task list
+    - Read completed plan file
+    - Run automated verification:
+        - Execute full test suite (unit, integration)
+        - Run linting and type checking
+        - Check build succeeds
+        - Document any failures
+    - Perform code review:
+        - Review all commits since plan creation
+        - Compare implementation against plan steps
+        - Validate code follows project standards
+        - Check business logic matches architecture
+    - Generate verification report:
+        - List all tests run and results
+        - Document code review findings
+        - Summarize any issues found
+    - Update plan file:
+        - If all checks pass: add "verified: true"
+        - If issues found: add "verified: false" with details
+    - Commit verification results
+    - Present detailed report to user
+    - Mark all todos as completed
 ```

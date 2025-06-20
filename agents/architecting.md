@@ -1,4 +1,4 @@
-# Architecting Workflow
+# Architecting Workflow
 
 ```yaml
 slug: archflow-architecting
@@ -9,7 +9,7 @@ source: 'global'
 
 The architecting workflow goes through a series of steps to create new architecture documents, and to update existing documents. At a high level it researches the code base, creates a new ADR (architectural decision record), updates the feature architecture, and updates the overall architecture.
 
-## 1  Folder Layout
+## 1  Folder Layout
 
 ```
 .
@@ -28,7 +28,7 @@ The architecting workflow goes through a series of steps to create new architect
 ```
 ---
 
-## 2  Key Artifacts
+## 2  Key Artifacts
 
 | Artifact                 | Purpose
 | ------------------------ | -------------------------------------
@@ -38,7 +38,11 @@ The architecting workflow goes through a series of steps to create new architect
 
 ---
 
-## 3  Delegated Task Contract (must be injected verbatim in every `new_task`)
+## 3  Implementation Details
+
+### Roo Code Implementation
+
+#### Delegated Task Contract (must be injected verbatim in every `new_task`)
 
 When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
 
@@ -52,9 +56,7 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * Workflow Steps: Include all relevant workflow steps the task should complete
 * Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
----
-
-## 4  Scope & Delegation Rules
+#### Scope & Delegation Rules
 
 * Creates/updates ADRs, Feature docs, Overall Architecture, and commits changes.
 * May delegate ONLY to `Researcher`.
@@ -62,15 +64,26 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * **Important** **Do not include** code in the Delegated Task Contract.
 * **Important** **Must do research before creating an architecture**
 
-## 5  Inputs
-* High‑level feature description (from Orchestrator)
+### Claude Code Implementation
+
+In Claude Code, the architecting phase:
+* Uses the TodoWrite tool to track progress through the workflow steps
+* Performs extensive code search using Grep/Glob tools instead of delegating to a researcher
+* Creates and updates architecture documents following the same structure
+* Makes commits with appropriate messages
+* Does not delegate tasks - all work is done within the single command execution
+
+---
+
+## 4  Inputs
+* High‑level feature description (from user or previous phase)
 * Existing architecture docs (paths)
-* Delegated Task Contract
+* In Roo Code: Delegated Task Contract
+* In Claude Code: User's feature request via command arguments
 
-## 6  Workflow
+## 5  Workflow
 
-### Root Task
-
+### Roo Code Workflow
 ```yaml
 state: ARCHITECTING
 agent: archflow-architecting
@@ -98,4 +111,30 @@ steps:
         - Analzye `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md`
         - Update overall-architecure.md with any major changes
     - "commit `<feature>: <summary> - <ADRFileName>`"
+```
+
+### Claude Code Workflow
+```yaml
+state: ARCHITECTING
+agent: claude
+delegate: false
+steps:
+    - Use TodoWrite to create task list for architecture phase
+    - Gather Context:
+        - Load existing architecture docs
+        - Use Grep/Glob to search codebase for relevant patterns
+        - Analyze project structure and dependencies
+    - Create ADR:
+        - Copy `archflow/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
+        - Ask clarifying questions if needed
+        - Fill sections with full relative paths in links
+    - Update or create feature architecture:
+        - If new, copy `archflow/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<featureName>.md`
+        - Ensure consistency with ADR
+        - Fill all required sections
+    - Update overall architecture:
+        - Read `archflow/architecture/overall-architecture.md`
+        - Update with major architectural changes
+    - Commit changes with descriptive message
+    - Mark all todos as completed
 ```
