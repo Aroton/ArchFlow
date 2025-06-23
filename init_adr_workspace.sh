@@ -1,25 +1,36 @@
 #!/bin/bash
 
 # This script initializes the current working directory with the Archflow structure.
-# It creates the necessary folders and copies template files from the ArchFlow repo.
+# It creates the necessary folders and copies template files from the global ArchFlow templates.
 # Usage: Run this script from the directory you want to initialize.
 # Example:
 #   mkdir my-new-project
 #   cd my-new-project
-#   /path/to/ArchFlow/init_adr_workspace.sh # Execute the script here
+#   init_adr_workspace.sh # Execute the script here
 
 # --- Determine Paths ---
-# Get the directory where this script itself is located.
+# Check if ArchFlow is installed
+ARCHFLOW_DIR="$HOME/.archflow"
+TEMPLATES_DIR="$ARCHFLOW_DIR/templates"
+
+# Fallback to script directory if global templates not found
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Assume the ArchFlow repo (containing templates) is where the script resides.
-# If the script is moved elsewhere, this path needs adjustment.
-SOURCE_REPO_DIR="$SCRIPT_DIR"
+# Check if global templates exist
+if [ -d "$TEMPLATES_DIR" ]; then
+    SOURCE_REPO_DIR="$TEMPLATES_DIR"
+    echo "Using global ArchFlow templates from: $TEMPLATES_DIR"
+else
+    # Fallback to local templates
+    SOURCE_REPO_DIR="$SCRIPT_DIR"
+    echo "Warning: Global templates not found. Using local templates from: $SCRIPT_DIR"
+    echo "Run 'install_claude.sh' or 'install_roocode.sh' to install global templates."
+fi
 
 # Target directory is the current working directory
 TARGET_DIR=$(pwd)
 
-# Define source template paths relative to the script's location
+# Define source template paths
 SOURCE_OVERALL_ARCH="$SOURCE_REPO_DIR/architecture/overall-architecture.md"
 SOURCE_FEATURE_TEMPLATE="$SOURCE_REPO_DIR/architecture/features/template.md"
 SOURCE_ADR_TEMPLATE="$SOURCE_REPO_DIR/architecture/adr/0000-template.md"

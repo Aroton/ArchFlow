@@ -7,7 +7,7 @@ groups: ['read', 'edit', 'command']
 source: 'global'
 ```
 
-The architecting workflow goes through a series of steps to create new architecture documents, and to update existing documents. At a high level it researches the code base, creates a new ADR (architectural decision record), updates the feature architecture, and updates the overall architecture.
+The architecting workflow goes through a series of steps to create new architecture documents, and to update existing documents. At a high level it begins with detailed requirements gathering, researches the code base, creates a new ADR (architectural decision record), updates the feature architecture, and updates the overall architecture.
 
 ## 1  Folder Layout
 
@@ -40,13 +40,33 @@ The architecting workflow goes through a series of steps to create new architect
 
 ## 3  Implementation Details
 
+### Requirements Gathering
+
+Before beginning architecture design, the agent must gather detailed requirements through user interaction. These requirements are documented in the Feature Architecture document (section 1.2 Requirements Gathering).
+
+**Requirements Gathering Process:**
+1. **Interactive Dialogue**: Ask clarifying questions about:
+   - User stories and specific scenarios
+   - Performance and scalability needs
+   - Security and compliance requirements
+   - Integration with existing systems
+   - Timeline and priority constraints
+
+2. **Documentation**: Record all requirements in the Feature Architecture document:
+   - Functional requirements (user stories, capabilities, integrations)
+   - Non-functional requirements (performance, security, reliability, usability)
+   - Constraints and context (technical, business, existing system)
+
+3. **Validation**: Confirm understanding with the user before proceeding to design
+
 ### Workflow State Integration
 
 The architecting agent must:
 1. Read `archflow/workflow-state.md` to understand current iteration context and any previous iteration learnings
-2. Update workflow state with architecture deliverable status as work progresses
-3. Run validation gate checks before completion
-4. Update workflow state with validation results
+2. Update workflow state with requirements gathering status
+3. Update workflow state with architecture deliverable status as work progresses
+4. Run validation gate checks before completion
+5. Update workflow state with validation results
 
 ### Validation Gate: Architecture → Planning
 
@@ -109,10 +129,12 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 
 In Claude Code, the architecting phase:
 * Uses the TodoWrite tool to track progress through the workflow steps
-* Performs extensive code search using Grep/Glob tools instead of delegating to a researcher
+* Begins with interactive requirements gathering through user dialogue
+* Performs extensive code search using Grep/Glob tools instead of delegating to a researcher  
 * Creates and updates architecture documents following the same structure
 * Makes commits with appropriate messages
 * Does not delegate tasks - all work is done within the single command execution
+* Updates workflow state frequently throughout the process
 
 ---
 
@@ -130,6 +152,12 @@ state: ARCHITECTING
 agent: archflow-architecting
 delegate: false
 steps:
+    - Gather Requirements:
+        - Ask clarifying questions about functional requirements
+        - Probe for non-functional requirements (performance, security, etc.)
+        - Understand constraints and existing system context
+        - Document all requirements in workflow state
+        - Get user confirmation on requirement understanding
     - Gather Context:
         - Load architecture docs
         -   state: ARCHITECTING-RESEARCHING
@@ -140,18 +168,20 @@ steps:
                 - Meet objectives of the delegated task context
                 - Complete task
     - Create ADR:
-        - Copy `/archflow/architectrue/0000-template.md` → `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md`
+        - Copy `~/.archflow/templates/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
+        - **IMPORTANT**: Replace YYYYMMDDHHMMSS with actual timestamp using `date +%Y%m%d%H%M%S`
         - Ask any clarifying questions
         - "Fill or update sections in `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md` - Must embed *full relative paths* in ADR links."
     - Update or create feature architecture:
-        - If new, copy `/archflow/features/template.md` → `/archflow/features/YYYYMMDDHHMMSS-<genericFeatureName>.md`
+        - If new, copy `~/.archflow/templates/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<genericFeatureName>.md`
+        - **IMPORTANT**: Use same timestamp as ADR for consistency
         - Analyze feature architecture and detect any differences with the ADR
         - Fill or update sections in `/archflow/features/YYYYMMDDHHMMSS-<genericFeatureName>.md`
     - Update overall architecture:
         - Analyze `/archflow/architecture/overall-architecture.md`
-        - Analzye `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md`
-        - Update overall-architecure.md with any major changes
-    - "commit `<feature>: <summary> - <ADRFileName>`"
+        - Analyze `/archflow/architecture/YYYYMMDDHHMMSS-<adrName>.md`
+        - Update overall-architecture.md with any major changes
+    - "commit using conventional format: `feat(architecture): add <feature> architecture - <ADRFileName>`"
 ```
 
 ### Claude Code Workflow
@@ -162,18 +192,30 @@ delegate: false
 steps:
     - Read workflow-state.md to understand current iteration context and learnings
     - Use TodoWrite to create task list for architecture phase
+    - Gather Requirements:
+        - Engage user in dialogue about feature requirements
+        - Ask specific questions about:
+            - User stories and acceptance criteria
+            - Performance and scalability needs
+            - Security and compliance requirements
+            - Integration with existing systems
+            - Timeline and priority constraints
+        - Document all requirements in Feature Architecture section 1.2
+        - Update workflow state with requirements gathering complete
+        - Get explicit user confirmation before proceeding
     - Gather Context:
         - Load existing architecture docs
         - Use Grep/Glob to search codebase for relevant patterns
         - Analyze project structure and dependencies
         - Review any previous iteration context and learnings
     - Create ADR:
-        - Copy `archflow/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
-        - Ask clarifying questions if needed
+        - Copy `~/.archflow/templates/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
+        - **IMPORTANT**: Replace YYYYMMDDHHMMSS with actual timestamp using `date +%Y%m%d%H%M%S`
         - Fill sections with full relative paths in links
         - Address any issues from previous iterations
     - Update or create feature architecture:
-        - If new, copy `archflow/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<featureName>.md`
+        - If new, copy `~/.archflow/templates/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<featureName>.md`
+        - **IMPORTANT**: Use same timestamp as ADR for consistency
         - Ensure consistency with ADR
         - Fill all required sections
     - Update overall architecture:
@@ -185,6 +227,7 @@ steps:
         - Check business alignment and requirement coverage
         - Ensure no conflicting constraints
     - Update workflow-state.md with architecture deliverable status and validation results
-    - Commit changes with descriptive message
+    - Commit changes using conventional format: `feat(architecture): add <feature> architecture - <ADRFileName>`
+        - Example: `feat(architecture): add user authentication architecture - 20240115143052-user-authentication.md`
     - Mark all todos as completed
 ```

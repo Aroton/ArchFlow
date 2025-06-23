@@ -1,370 +1,503 @@
 # ArchFlow Unified Workflow Command
 
-Complete end-to-end ArchFlow workflow orchestration for feature development.
+Complete end-to-end ArchFlow workflow orchestration for feature development with automatic phase execution, validation gates, and iteration support.
 
 ## Usage
-- `/archflow "feature description"` - Execute complete ArchFlow workflow
+- `/archflow "feature description"` - Execute complete ArchFlow workflow with automatic orchestration
 
 ## Instructions
 
 ### Workflow Initialization
-1. **Initialize workflow state management**:
-   - Create `archflow/workflow-state.md` if not exists, or load existing iteration context
-   - Initialize folder structure: `archflow/`, `archflow/architecture/`, `archflow/plans/`, `archflow/archive/workflow-history/`
-   - Document feature description, iteration number, and current phase
 
-2. **Create master todo list for phases**:
-   - Use TodoWrite to create Level 1 todos for workflow phases:
-     - ARCHITECTING Phase
-     - PLANNING Phase  
-     - EXECUTING Phase
-     - VERIFYING Phase
-   - Track iteration context and validation gate results
+1. **Initialize Workflow State Management**
+   - Create `archflow/workflow-state.md` if it doesn't exist
+   - Load any existing iteration context and learnings
+   - Set workflow status to "initializing"
+   - Record feature description and timestamp
 
-3. **Load any existing iteration context**:
-   - If workflow-state.md exists, extract previous iteration learnings
-   - Identify target phase for continuation
-   - Preserve all context and findings from previous attempts
+2. **Create Master Todo List**
+   - Use TodoWrite to create Level 1 todos for master workflow phases:
+     - ARCHITECTING: Requirements gathering and architecture design
+     - PLANNING: Create detailed implementation plan
+     - EXECUTING: Implement all plan phases with verification
+     - VERIFYING: Final comprehensive validation
+   - Track current iteration number (max 3 iterations)
+
+3. **Set Up Iteration Tracking**
+   - Initialize iteration counter (current_iteration: 1)
+   - Set max_iterations: 3
+   - Prepare context preservation for potential iterations
 
 ### Phase Orchestration (with Validation Gates)
 
-#### 1. ARCHITECTING PHASE
-Execute architecting workflow with comprehensive research and documentation:
+#### 1. **ARCHITECTING PHASE**
 
-- **Mark "ARCHITECTING Phase" todo as in_progress**
-- **Read workflow-state.md** to understand current iteration context and learnings
-- **Use TodoWrite** to create task list for architecture phase
-- **Gather Context**:
-  - Load existing architecture docs using Read tool
-  - Use Grep/Glob to search codebase for relevant patterns
-  - Analyze project structure and dependencies
-  - Review any previous iteration context and learnings
-- **Create ADR**:
-  - Copy `archflow/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
-  - Ask clarifying questions if needed
-  - Fill sections with full relative paths in links
-  - Address any issues from previous iterations
-- **Update or create feature architecture**:
-  - If new, copy `archflow/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<featureName>.md`
-  - Ensure consistency with ADR
-  - Fill all required sections
-- **Update overall architecture**:
-  - Read `archflow/architecture/overall-architecture.md`
-  - Update with major architectural changes
+**Workflow State Update**: Mark phase as "architecting" in workflow-state.md
 
-- **Run Architecture → Planning validation gate**:
-  ```yaml
-  architecture_validation:
-    adr_completeness:
-      - problem_statement_clear: true
-      - solution_approaches_evaluated: true
-      - decision_rationale_documented: true
-      - consequences_identified: true
-      - alternatives_considered: true
-    technical_feasibility:
-      - dependencies_available_and_compatible: true
-      - technology_stack_alignment: true
-      - performance_requirements_addressable: true
-      - security_requirements_addressable: true
-    business_alignment:
-      - requirements_fully_addressed: true
-      - constraints_respected: true
-      - success_criteria_defined: true
-      - stakeholder_concerns_addressed: true
-  ```
-- **Update workflow-state.md** with architecture deliverable status and validation results
-- **Commit changes** with descriptive message
-- **Mark architecture todos as completed**
+**Requirements Gathering**:
+- Engage user in interactive dialogue about feature requirements
+- Ask specific questions about:
+  - User stories and acceptance criteria
+  - Performance and scalability needs
+  - Security and compliance requirements
+  - Integration with existing systems
+  - Timeline and priority constraints
+- Document all requirements in Feature Architecture section 1.2
+- Get explicit user confirmation before proceeding
 
-**On validation gate failure**:
-- Update workflow-state.md with failure details and required improvements
-- Increment iteration counter
-- Return to Architecting phase with preserved context
-- If max iterations exceeded (3), provide detailed failure report and exit
+**Context Research**:
+- Load existing architecture docs from `archflow/architecture/`
+- Use Grep to search codebase for relevant patterns and existing implementations
+- Use Glob to find related files and components
+- Analyze project structure and dependencies
+- Review any previous iteration context from workflow-state.md
 
-**On validation gate success**:
-- Mark Architecting todo as "completed"
-- Update workflow-state.md with successful architecture deliverables
-- Proceed to Planning phase
+**Create ADR (Architecture Decision Record)**:
+- Copy template: `~/.archflow/templates/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
+  - **IMPORTANT**: Replace YYYYMMDDHHMMSS with actual timestamp using `date +%Y%m%d%H%M%S` format
+  - Example: 20240115143052-user-authentication.md
+- Fill all sections with:
+  - Clear problem statement
+  - Solution approaches evaluated
+  - Decision rationale documented
+  - Consequences identified
+  - Alternatives considered
+- Include full relative paths in all links
 
-#### 2. PLANNING PHASE
-Execute planning workflow with detailed implementation breakdown:
+**Create/Update Feature Architecture**:
+- If new: Copy `~/.archflow/templates/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<featureName>.md`
+  - **IMPORTANT**: Use same timestamp as ADR for consistency
+  - Example: 20240115143052-user-authentication-feature.md
+- Document:
+  - Complete requirements (functional and non-functional)
+  - Technical design details
+  - Integration points
+  - Success criteria
+- Ensure consistency with ADR
 
-- **Mark "PLANNING Phase" todo as in_progress**
-- **Read workflow-state.md** to understand current iteration context
-- **Use TodoWrite** to create task list for planning phase
-- **Review architecture docs** (ADR and Feature Architecture)
-- **Identify external dependencies** using package.json analysis
-- **Decompose work into atomic steps**:
-  - Each step should be standalone and testable
-  - Apply complexity scoring system instead of rigid file limits:
-    - Calculate complexity score based on multiple factors
-    - Suggest refactoring if complexity score exceeds threshold
-    - Consider lines changed, dependencies affected, risk level
-  - Suggest model complexity for each step (Opus/Sonnet)
-  - Include comprehensive complexity scoring and risk assessment
-  - Define explicit success criteria for each step beyond technical completion
-- **Research codebase**:
-  - Use Grep/Glob to analyze existing patterns
-  - Identify impacted files and dependencies
-  - Understand current implementation approaches
-- **Write plan**:
-  - Copy `archflow/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<adrName>.md`
-  - Fill all sections following template structure
-  - Set all steps to `status: scheduled`
-  - Include full relative paths in all references
-  - Add comprehensive dependency mapping with cross-feature impact analysis
-  - Include structured risk assessment covering technical, business, and timeline factors
-  - Define measurable success criteria for each step
+**Update Overall Architecture**:
+- Read `archflow/architecture/overall-architecture.md`
+- Update with major architectural changes
+- Ensure new feature integrates cleanly
 
-- **Run Planning → Execution validation gate**:
-  ```yaml
-  planning_validation:
-    implementability_check:
-      - verify_all_dependencies_available
-      - validate_technology_choices
-      - confirm_api_compatibility
-    complexity_analysis:
-      - calculate_complexity_scores_per_step
-      - identify_high_risk_steps_above_threshold
-      - validate_resource_estimates_with_buffers
-    risk_assessment:
-      - technical_risks: dependency failures, integration issues, performance
-      - business_risks: scope creep, requirement changes, stakeholder alignment
-      - timeline_risks: complexity underestimation, external dependencies
-    integration_validation:
-      - map_step_dependencies_with_impact_analysis
-      - identify_potential_conflicts_and_mitigation
-      - validate_comprehensive_testing_approach
-  ```
-- **Update workflow-state.md** with planning deliverable status and validation results
-- **Commit plan** with descriptive message
-- **Mark planning todos as completed**
+**Architecture → Planning Validation Gate**:
+- Verify ADR completeness:
+  - Problem statement clear
+  - Solution approaches evaluated
+  - Decision rationale documented
+  - Consequences identified
+- Check technical feasibility:
+  - Dependencies available and compatible
+  - Technology stack alignment
+  - Performance requirements addressable
+  - Security requirements addressable
+- Validate business alignment:
+  - Requirements fully addressed
+  - Constraints respected
+  - Success criteria defined
+- Update workflow-state.md with validation results
+- If validation fails:
+  - Update workflow state with failure reason
+  - Request user guidance
+  - Retry architecture phase with adjustments
+- If validation passes:
+  - Commit: `feat(architecture): add <feature> architecture - <ADRFileName>`
+    - Example: `feat(architecture): add user authentication architecture - 20240115143052-user-authentication.md`
+  - **STOP and notify user**: "Architecture phase completed. Review the ADR and feature architecture before proceeding."
 
-**On validation gate failure**:
-- Update workflow-state.md with failure details and required plan improvements
-- Increment iteration counter
-- Determine iteration target (Planning refinement or return to Architecture)
-- Route to target phase with preserved context
-- If max iterations exceeded (3), provide detailed failure report and exit
+#### 2. **PLANNING PHASE**
 
-**On validation gate success**:
-- Mark Planning todo as "completed"
-- Update workflow-state.md with successful planning deliverables
-- Proceed to Executing phase
+**Workflow State Update**: Mark phase as "planning" in workflow-state.md
 
-#### 3. EXECUTING PHASE
-Execute implementation with smart sequential execution and progressive validation:
+**Review Architecture**:
+- Load ADR and Feature Architecture documents
+- Identify all external dependencies
+- Analyze implementation requirements
 
-- **Mark "EXECUTING Phase" todo as in_progress**
-- **Read workflow-state.md** to understand current iteration context
-- **Use TodoWrite** to create task list from plan steps
-- **Read plan file** to understand all implementation steps with dependencies
-- **Analyze step dependencies** and build execution graph:
-  - Identify critical path (longest dependency chain)
-  - Group independent steps for batch processing
-  - Calculate optimal execution order
-  - Determine validation strategy per step based on complexity score
-- **Smart Sequential Execution with Progressive Validation**:
-  - For each step/batch in optimized order:
-    - Mark todo(s) as in_progress
-    - Update plan file: set step.status to "in_progress"
-    - Update workflow-state.md with current execution progress
-    - **Capability Matrix Validation Assignment**:
-      - Score 0-5: fast_checks only (syntax, imports, type checking, basic linting)
-      - Score 6-8: fast_checks + medium_checks (unit tests, integration tests for affected components)
-      - Score 9-12: fast_checks + medium_checks + selective_heavy_checks
-      - Score 13+: full_validation_suite
-    - **Pre-Step Validation**: Verify prerequisites, architectural assumptions, dependencies
-    - **Implementation**: Read files, make modifications, create new files as needed
-    - **Fast Validation**: Run syntax validation, check imports, type checking, basic linting
-    - **Risk-Based Additional Validation**: Based on complexity, run affected tests and integration checks
-    - **Failure Recovery with Graduated Escalation**:
-      - Attempt 1: Local fix within step scope
-      - Attempt 2: Alternative implementation approach
-      - Attempt 3: User consultation + scope reduction
-      - Attempt 4: Step rollback with technical debt tracking
-      - Attempt 5: Escalate to planning iteration
-    - **Rollback Mechanisms**: Step-level, batch-level, or checkpoint rollback as needed
-    - **Completion**: Update plan status to "complete", commit with flexible strategy, mark todo completed
-- **Milestone and Final Validation**:
-  - Run milestone validation every 5 steps (medium checks)
-  - Run final validation gate checks before phase completion
+**Research Codebase**:
+- Use Grep/Glob to analyze existing patterns
+- Identify files that will be impacted
+- Understand current implementation approaches
+- Check package.json for available dependencies
 
-- **Run Execution → Verification validation gate**:
-  - All planned steps implemented and marked complete
-  - Code builds successfully without errors
-  - All unit tests pass for implemented functionality
-  - Integration points function correctly
-  - Implementation matches architectural intent from ADR
-  - No critical security or performance issues introduced
-- **Update workflow-state.md** with execution completion and validation results
-- **Mark execution todos as completed**
+**Decompose Work into Atomic Steps**:
+- Each step should be:
+  - Standalone and testable
+  - Buildable independently
+  - Have clear success criteria
+- Apply complexity scoring (1-15+ scale):
+  - Lines of code impact (1-5)
+  - Files affected count (weighted)
+  - Dependency chain depth (1-3)
+  - Technical risk level (1-5)
+  - Integration complexity (1-3)
+- Include for each step:
+  - Explicit success criteria
+  - Risk assessment
+  - Dependency mapping
+  - Suggested model (Opus for complex, Sonnet for simple)
 
-**On validation gate failure**:
-- Update workflow-state.md with failure details and execution issues
-- Increment iteration counter
-- Determine iteration target based on failure type:
-  - Implementation issues: return to Executing phase
-  - Design issues: return to Planning phase
-  - Architectural conflicts: return to Architecture phase
-- Route to target phase with preserved context
-- If max iterations exceeded (3), provide detailed failure report and exit
+**Organize Steps into Logical Phases**:
+- Group 2-8 related steps per phase
+- Each phase represents coherent feature/component
+- Define for each phase:
+  - Phase name and description
+  - List of step IDs
+  - Phase-level success criteria
+  - Verification approach
+  - Dependencies on other phases
+  - Commit message (conventional format)
 
-**On validation gate success**:
-- Mark Executing todo as "completed"
-- Update workflow-state.md with successful execution deliverables
-- Proceed to Verifying phase
+**Create Implementation Plan**:
+- Copy template: `~/.archflow/templates/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<planName>.md`
+  - **IMPORTANT**: Use same timestamp as ADR for traceability
+  - Example: 20240115143052-user-authentication-plan.md
+- Fill all sections:
+  - Overview and objectives
+  - Detailed steps with complexity scores
+  - Phase organization
+  - Success criteria per phase
+  - Verification approach
+  - Risk assessment
+- Set all steps and phases to `status: scheduled`
+- Design plan to support real-time status updates during execution
 
-#### 4. VERIFYING PHASE
-Execute comprehensive verification across technical, business, and quality dimensions:
+**Planning → Execution Validation Gate**:
+- Verify implementability:
+  - All dependencies available
+  - Technology choices valid
+  - API compatibility confirmed
+- Check complexity analysis:
+  - Complexity scores calculated
+  - High-risk steps identified
+  - Resource estimates reasonable
+- Validate integration:
+  - Step dependencies mapped
+  - Potential conflicts identified
+  - Testing approach comprehensive
+- Update workflow-state.md with validation results
+- If validation fails:
+  - Update workflow state with failure reason
+  - Determine if issue requires architecture revision
+  - Route to appropriate phase (planning retry or architecture)
+- If validation passes:
+  - Commit: `feat(planning): create <feature> implementation plan - <PlanFileName>`
+    - Example: `feat(planning): create user authentication implementation plan - 20240115143052-user-authentication-plan.md`
+  - **STOP and notify user**: "Planning phase completed. Review the implementation plan before proceeding."
 
-- **Mark "VERIFYING Phase" todo as in_progress**
-- **Read workflow-state.md** to understand complete development context
-- **Use TodoWrite** to create verification task list
-- **Read completed plan file** and all architecture documents
-- **Run Technical Validation**:
-  - Execute full test suite (unit, integration, end-to-end)
-  - Run linting and type checking
-  - Check build succeeds
-  - Run security scanning
-  - Document any failures
-- **Perform Business Validation**:
-  - Verify original requirements are met
-  - Check acceptance criteria satisfied
-  - Validate user story completion
-  - Assess performance benchmarks
-- **Run Quality Validation**:
-  - Review code quality standards compliance
-  - Check documentation completeness
-  - Validate testing coverage adequacy
-  - Verify operational readiness
-- **Perform comprehensive code review**:
-  - Review all commits since plan creation
-  - Compare implementation against plan steps and ADR
-  - Validate code follows project standards
-  - Check business logic matches architecture
-  - Verify integration points function correctly
-- **Generate comprehensive verification report**:
-  - List all verification levels and results
-  - Document code review findings
-  - Summarize any issues found
-  - Provide iteration recommendations if needed
+#### 3. **EXECUTING PHASE**
 
-- **Run Verification → Complete validation gate**:
-  ```yaml
-  verification_levels:
-    technical_validation: [automated_checks, manual_checks]
-    business_validation: [requirement_validation, stakeholder_validation]
-    quality_validation: [maintainability, operational_readiness]
-  iteration_triggers:
-    return_to_execution: [critical_bugs, performance_issues, integration_failures]
-    return_to_planning: [flawed_approach, wrong_estimates, dependency_issues]
-    return_to_architecture: [requirement_mismatch, architectural_violations]
-    complete_success: [all_levels_pass, stakeholder_acceptance, quality_gates_satisfied]
-  ```
-- **Update workflow-state.md** with verification results
-- **Mark verification todos as completed**
+**Workflow State Update**: Mark phase as "executing" in workflow-state.md
 
-**On validation gate failure**:
-- Update workflow-state.md with failure details and verification issues
-- Increment iteration counter
-- Determine iteration target based on failure type:
-  - Critical bugs/performance: return to Executing phase
-  - Implementation approach flawed: return to Planning phase
-  - Fundamental requirement mismatch: return to Architecture phase
-- Route to target phase with preserved context
-- If max iterations exceeded (3), provide detailed failure report and exit
+**Execution Strategy**: Phase-based implementation with continuous verification
 
-**On validation gate success**:
-- Mark Verifying todo as "completed"
-- Update workflow-state.md with successful verification results
-- Proceed to Completion
+**For Each Phase in the Plan**:
+
+1. **Phase Initialization**:
+   - Mark phase as "in_progress" in workflow-state.md
+   - Create Level 2 todos for all steps in the phase
+   - Update plan file: set phase status to "in_progress"
+
+2. **Execute All Steps in Phase**:
+   For each step:
+   - Update workflow-state.md: mark step as "executing"
+   - Update plan file: set step.status to "in_progress"
+   
+   **Implementation**:
+   - Read all files specified in the step
+   - Make necessary code modifications
+   - Create new files if needed
+   - Follow existing code patterns and conventions
+   
+   **Step-Level Quick Validation** (based on complexity):
+   - Low complexity (score 0-5): syntax validation, import checks
+   - Medium complexity (score 6-8): + unit tests for affected components
+   - High complexity (score 9+): + integration tests, dependency analysis
+   
+   **Step Completion**:
+   - Update plan file: set step.status to "complete"
+   - Update workflow-state.md with step completion
+
+3. **Phase Verification** (after all steps complete):
+   - Update workflow-state.md: mark phase as "verifying"
+   - Run comprehensive phase verification:
+     - Execute all unit tests for phase functionality
+     - Run integration tests for phase connections
+     - Full linting and build verification
+     - Verify phase success criteria from plan
+     - Test user-facing functionality if applicable
+   
+   **Handle Verification Results**:
+   - If verification passes:
+     - Update plan: mark phase as "verified"
+     - Update workflow-state.md: phase complete
+     - Commit using phase's predefined message from plan
+      - Examples:
+        - `feat(auth): implement core authentication models`
+        - `feat(auth): add authentication endpoints and middleware`
+        - `feat(ui): add authentication components and routes`
+     - Continue to next phase WITHOUT STOPPING
+   
+   - If verification fails:
+     - Update workflow-state.md with failure details
+     - Attempt recovery (based on complexity):
+       - Low complexity: fix and retry
+       - Medium complexity: consult user if needed
+       - High complexity: may require planning revision
+     - If recovery fails: stop and request user intervention
+
+4. **User Verification Points**:
+   - Only stop for user if:
+     - UI/UX changes need visual verification
+     - Critical integration points need testing
+     - Verification failures require guidance
+
+**Execution → Verification Validation Gate**:
+- Check all phases completed successfully
+- Verify all steps marked as "complete" or "verified"
+- Ensure no critical issues remain unresolved
+- Validate builds and tests passing
+- If validation fails:
+  - Determine appropriate iteration target
+  - Update workflow state with context
+  - Route to target phase
+- If validation passes:
+  - Continue to final verification phase
+
+#### 4. **VERIFYING PHASE**
+
+**Workflow State Update**: Mark phase as "final_verification" in workflow-state.md
+
+**Comprehensive Technical Validation**:
+- Execute full test suite across all implemented phases
+- Run cross-phase integration tests
+- Verify all phase success criteria were met
+- Run linting and type checking on complete codebase
+- Check final build succeeds
+- Run security scanning if applicable
+- Test performance benchmarks
+- Document any issues found
+
+**Business Validation**:
+- Verify original requirements are met
+- Check acceptance criteria satisfied
+- Validate user story completion
+- Assess performance against benchmarks
+- Confirm integration requirements
+
+**Quality Validation**:
+- Review code quality standards compliance
+- Check documentation completeness
+- Validate testing coverage adequacy
+- Verify operational readiness
+- Assess maintainability
+
+**Code Review**:
+- Review all commits since plan creation
+- Compare implementation against plan steps and ADR
+- Validate code follows project standards
+- Check business logic matches architecture
+- Verify integration points function correctly
+
+**Verification → Complete Validation Gate**:
+- All technical checks pass
+- Business requirements satisfied
+- Quality standards met
+- No critical issues outstanding
+- If validation fails:
+  - Generate detailed failure report
+  - Determine iteration target (execution, planning, or architecture)
+  - Update workflow state with recommendations
+  - Initiate iteration with preserved context
+- If validation passes:
+  - Commit: `chore(verification): complete <feature> verification - <ADRFileName>`
+    - Example: `chore(verification): complete user authentication verification - 20240115143052-user-authentication.md`
+  - Proceed to completion
 
 ### Iteration Handling
-When any validation gate fails:
-1. **Increment iteration counter** in workflow-state.md
-2. **Update workflow state** with failure context, learnings, and detailed reasoning
-3. **Determine iteration target**:
-   - **Current phase**: Minor issues, missing details, scope adjustments
-   - **Previous phase**: Implementation approach issues, resource estimate problems
-   - **Architecture phase**: Fundamental design flaws, invalid assumptions, requirement mismatches
-4. **Route execution** to determined target phase with preserved context
-5. **Resume workflow** from target phase with all previous learnings intact
-6. **If max iterations exceeded (3)**: Provide detailed failure report with complete context and exit
 
-### Completion and Archival
-Upon successful validation gate passage:
-1. **Archive workflow-state.md**:
-   - Create timestamp-based filename: `YYYYMMDD-HHMMSS-<feature-name>-workflow.md`
-   - Move to `archflow/archive/workflow-history/`
-   - Preserve complete audit trail of iterations and decisions
-2. **Provide comprehensive completion report**:
-   - Summary of all phases completed
-   - Total iterations required
-   - Key architectural decisions made
-   - Implementation highlights
-   - Quality metrics achieved
-   - Archive location reference
-3. **Mark all master todos as completed**
-4. **Commit archival** with descriptive message
+**Iteration Triggers and Routing**:
+
+1. **Return to Current Phase**:
+   - Minor issues that can be fixed within phase
+   - Simple validation failures
+   - Retry with adjustments
+
+2. **Return to Previous Phase**:
+   - Planning issues discovered during execution
+   - Missing steps identified
+   - Complexity underestimated
+
+3. **Return to Architecture**:
+   - Fundamental requirement mismatch
+   - Technology feasibility issues
+   - Major design flaws
+
+**Iteration Process**:
+- Increment iteration counter
+- Update workflow-state.md with:
+  - Failure reason and context
+  - Lessons learned
+  - Required adjustments
+- Route to determined target phase
+- Resume execution with preserved context
+- Maximum 3 iterations before failure
+
+### Completion
+
+1. **Archive Workflow State**:
+   - Move `archflow/workflow-state.md` to `archflow/archive/workflow-history/YYYYMMDDHHMMSS-<feature>-workflow.md`
+     - **IMPORTANT**: Use `date +%Y%m%d%H%M%S` format for full timestamp
+     - Example: `20240115143052-user-authentication-workflow.md`
+   - Include final status and metrics
+
+2. **Generate Completion Report**:
+   ```
+   ✅ WORKFLOW COMPLETED SUCCESSFULLY
+   
+   Feature: <feature name>
+   Total Duration: <time>
+   Iterations Required: <count>
+   
+   Phases Completed:
+   - Architecting: <status> (Iteration <n>)
+   - Planning: <status> (Iteration <n>)
+   - Executing: <status> (Iteration <n>)
+   - Verifying: <status> (Iteration <n>)
+   
+   Deliverables:
+   - ADR: <filename>
+   - Feature Architecture: <filename>
+   - Implementation Plan: <filename>
+   - Commits: <count>
+   
+   Next Steps:
+   - <any follow-up recommendations>
+   ```
+
+3. **Mark Master Todos Complete**:
+   - Update all Level 1 todos as completed
+   - Clear any remaining sub-tasks
 
 ## Error Handling
 
-- **If validation gate fails**: Update workflow state with detailed failure context, determine iteration target based on failure type, route to appropriate phase with preserved context
-- **If max iterations exceeded**: Provide comprehensive failure report including all iteration attempts, failure reasons, context preservation, and recommendations for manual intervention
-- **If critical error occurs**: Preserve workflow state with complete context, provide detailed recovery instructions, maintain audit trail for debugging
+### Validation Gate Failures
+- Update workflow state with detailed failure context
+- Determine appropriate iteration target based on failure type
+- Preserve all context and learnings for retry
+- Route to target phase with full context
+
+### Maximum Iterations Exceeded
+- Generate comprehensive failure report:
+  - All iteration attempts and outcomes
+  - Blocking issues identified
+  - Recommended manual interventions
+  - Preserved context for manual completion
+
+### Critical Errors
+- Immediately preserve workflow state
+- Document error context and stack trace
+- Provide recovery instructions
+- Suggest rollback options if needed
+
+### Recovery Strategies
+- **Local Recovery**: Fix within current phase
+- **Phase Rollback**: Return to previous phase
+- **Architecture Revision**: Major design changes needed
+- **Manual Intervention**: User guidance required
 
 ## Example Output
 
 ```
 ArchFlow Workflow: User Authentication System
-========================================
+============================================
 
-Phase 1/4: ARCHITECTING ✅ (Iteration 1)
-- Created ADR: 20240120143000-user-auth-system.md
-- Updated Feature Architecture: 20240120143000-authentication-feature.md
-- Updated Overall Architecture
-- Validation Gate: PASSED
-  ✓ ADR completeness verified
-  ✓ Technical feasibility confirmed
-  ✓ Business alignment validated
+🚀 INITIALIZING WORKFLOW
+- Created workflow-state.md
+- Set up master todo tracking
+- Iteration 1/3
 
-Phase 2/4: PLANNING ✅ (Iteration 2) 
-- Created Implementation Plan: 20240120143000-auth-implementation.md
-- 8 atomic steps identified (complexity scores 3-9)
-- Comprehensive dependency mapping completed
-- Risk assessment covering technical/business/timeline factors
-- Validation Gate: PASSED (retry after complexity refinement)
-  ✓ All dependencies available and compatible
-  ✓ Complexity scores within acceptable bounds
-  ✓ Resource estimates validated with buffers
+📐 Phase 1/4: ARCHITECTING
+- Gathering requirements...
+  ✓ Functional requirements documented
+  ✓ Non-functional requirements captured
+  ✓ User confirmation received
+- Researching codebase...
+  ✓ Found 3 auth-related patterns
+  ✓ Identified integration points
+- Creating architecture...
+  ✓ ADR: 20240120143000-user-auth-system.md
+  ✓ Feature Architecture updated
+  ✓ Overall Architecture updated
+- Validation Gate: PASSED ✅
+- Committed: feat(architecture): add user authentication architecture
 
-Phase 3/4: EXECUTING ✅ (Iteration 1)
-- Implemented 8/8 steps using smart sequential execution
-- Progressive validation: fast_checks + medium_checks per complexity
-- All builds successful, all tests passing
-- No rollbacks required, no technical debt introduced
-- Validation Gate: PASSED
-  ✓ All planned steps complete
-  ✓ Build and test success
-  ✓ Integration points functional
-  ✓ Architectural compliance verified
+[USER CONFIRMATION REQUIRED - Architecture review]
 
-Phase 4/4: VERIFYING ✅ (Iteration 1)
-- Technical validation: PASSED (full test suite, build, lint, security scan)
-- Business validation: PASSED (requirements met, acceptance criteria satisfied)
-- Quality validation: PASSED (code quality, documentation, coverage, operational readiness)
-- Comprehensive code review: PASSED (standards compliance, architectural alignment)
-- Validation Gate: PASSED
-  ✓ All verification levels satisfied
-  ✓ No iteration triggers identified
-  ✓ Complete success criteria met
+📋 Phase 2/4: PLANNING
+- Analyzing implementation requirements...
+- Decomposing into 12 atomic steps across 3 phases:
+  ✓ Phase 1: Core Auth Models (4 steps, complexity: 6-8)
+  ✓ Phase 2: Authentication Flow (5 steps, complexity: 8-10)
+  ✓ Phase 3: Integration & UI (3 steps, complexity: 5-7)
+- Created Plan: 20240120143500-auth-implementation.md
+- Validation Gate: PASSED ✅
+- Committed: feat(planning): create auth implementation plan
+
+[USER CONFIRMATION REQUIRED - Plan review]
+
+🔨 Phase 3/4: EXECUTING
+Phase 1: Core Auth Models
+- Step 1.1: Create User model... ✓
+- Step 1.2: Create Session model... ✓
+- Step 1.3: Add password hashing... ✓
+- Step 1.4: Create auth service... ✓
+- Phase verification... PASSED ✅
+- Committed: feat(auth): implement core authentication models
+
+Phase 2: Authentication Flow
+- Step 2.1: Create login endpoint... ✓
+- Step 2.2: Create logout endpoint... ✓
+- Step 2.3: Add session middleware... ✓
+- Step 2.4: Implement JWT tokens... ✓
+- Step 2.5: Add refresh tokens... ✓
+- Phase verification... PASSED ✅
+- Committed: feat(auth): implement authentication flow
+
+Phase 3: Integration & UI
+- Step 3.1: Create login form... ✓
+- Step 3.2: Add auth context... ✓
+- Step 3.3: Protect routes... ✓
+- Phase verification... PASSED ✅
+- Committed: feat(auth): add authentication UI and integration
+
+✔️ Phase 4/4: VERIFYING
+- Running comprehensive test suite... PASSED
+- Cross-phase integration tests... PASSED
+- Security scanning... PASSED
+- Performance benchmarks... PASSED
+- Business requirements... SATISFIED
+- Code quality review... APPROVED
+- Validation Gate: PASSED ✅
+- Committed: chore(verification): complete auth verification
 
 ✅ WORKFLOW COMPLETED SUCCESSFULLY
-- Total iterations: 2 (1 planning refinement)
-- Final implementation: 8 steps, 0 technical debt
-- Quality metrics: 95% test coverage, 0 security issues, performance within bounds
-- Archived: archflow/archive/workflow-history/20240120-143000-user-auth-system-workflow.md
+- Total iterations: 1
+- Duration: 45 minutes
+- Archived: archflow/archive/workflow-history/20240120143052-user-auth-workflow.md
+
+Next Steps:
+- Deploy to staging environment
+- Conduct user acceptance testing
+- Monitor authentication metrics
 ```
+
+## Notes
+
+- The workflow automatically continues between phases unless user confirmation is explicitly required
+- Validation gates ensure quality at each phase boundary
+- Iteration support allows recovery from failures without losing progress
+- All work is tracked in workflow-state.md for transparency
+- TodoWrite is used extensively for multi-level progress tracking
+- Each phase follows the detailed workflows from the agent documentation
 

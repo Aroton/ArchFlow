@@ -7,7 +7,7 @@ groups: ['read', 'edit', 'command']
 source: 'global'
 ```
 
-Converts architecture artifacts into an executable implementation plan.
+Converts architecture artifacts into an executable implementation plan organized into logical phases. Each phase groups related steps that can be implemented and verified together.
 
 ## 1  Folder Layout
 
@@ -34,6 +34,7 @@ Converts architecture artifacts into an executable implementation plan.
 | -------------------------- | -------------------- |
 | ADR + Feature Architecture | Design source        |
 | Plan file                  | Output of this phase |
+| Phase groupings            | Logical step organization |
 
 ---
 
@@ -66,8 +67,10 @@ The user may be prompted to switch models based on task complexity.
 The planning agent must:
 1. Read `archflow/workflow-state.md` to understand current iteration context
 2. Update workflow state with planning deliverable status
-3. Run validation gate checks before completion
-4. Update workflow state with validation results
+3. Organize steps into logical phases for execution
+4. Define clear success criteria for each phase
+5. Run validation gate checks before completion
+6. Update workflow state with validation results
 
 ### Validation Gate: Planning → Execution
 
@@ -124,10 +127,13 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 
 #### Scope & Delegation Rules
 
-* Produces a markdown plan in `plans/` with atomic, testable steps.
-* May delegate to `researcher` for code inspection.
-* Must NOT include code snippets inside the plan.
-* Status can be (`scheduled`, `in_progress`, `complete`)
+* Produces a markdown plan in `plans/` using the template (`0000-template.md`)
+* Must organize atomic steps into logical phases (2-8 steps per phase)
+* Each phase must have explicit success criteria and verification approach
+* Each phase should define its commit message following conventional commits
+* May delegate to `researcher` for code inspection
+* Must NOT include code snippets inside the plan
+* Status tracking: steps and phases use (`scheduled`, `in_progress`, `complete`, `verified`)
 * Must update workflow-state.md with deliverable status and validation results
 * **Important** **Do not include** code in the Delegated Task Contract.
 * **Important** **Must do research before creating a plan**
@@ -137,9 +143,15 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 
 In Claude Code, the planning phase:
 * Uses TodoWrite to track progress through planning steps
-* Performs code analysis using Grep/Glob tools directly
-* Creates a detailed implementation plan with atomic steps
+* Performs code analysis using Grep/Glob tools directly  
+* Creates a detailed implementation plan with:
+  - Atomic steps grouped into logical phases
+  - Clear success criteria for each phase
+  - Verification approach for each phase
+  - Dependencies between phases
+  - Commit message for each phase (conventional format)
 * Instead of assigning agent modes, may suggest model complexity (Opus/Sonnet)
+* Plan is designed to be updated during execution as tasks complete
 * Commits the plan file with appropriate message
 * Does not delegate tasks - all analysis is done within the command
 
@@ -166,13 +178,19 @@ steps:
     - Identify external dependencies
     - "decompose work into steps - Each step should":
         - be standalone
-        - be shippable
+        - be shippable  
         - be buildable
         - be tested
         - use complexity scoring instead of rigid file limits (score >12 suggests refactoring)
         - include explicit success criteria (technical, functional, quality, integration)
         - have risk assessment and dependency mapping
         - Analyze the work and assign the appropriate agentMode (intern, junior, midlevel, senior)
+    - "organize steps into phases following template structure":
+        - group 2-8 related steps per phase
+        - ensure phases represent coherent features/components
+        - define phase success criteria and verification approach
+        - specify commit message for each phase
+        - map dependencies between phases
     -   state: PLANNING-RESEARCHING
         agent: researcher
         delegate: true
@@ -181,11 +199,22 @@ steps:
             - Meet objectives of the delegated task context
             - Complete task
     - write plan:
-        - Copy `/archflow/plans/0000-template.md` → `/archflow/plans/YYYYMMDDHHMMSS-<adrName>.md`
+        - Copy `~/.archflow/templates/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<planName>.md`
+        - **IMPORTANT**: Use same timestamp as ADR for traceability
         - Fill in all sections - follow the template file
-        - "Update (`status: scheduled`)"
+        - Organize steps into logical phases
+        - Define success criteria for each phase
+        - Specify verification approach per phase
+        - Define commit message for each phase using conventional commits:
+            - "feat(component): implement <phase-description>"
+            - "fix(component): resolve <issue-description>"
+            - "refactor(component): improve <aspect-description>"
+            - "docs(component): update <documentation-description>"
+            - "test(component): add <test-description>"
+        - "Set all steps to (`status: scheduled`)"
+        - "Set all phases to (`status: scheduled`)"
         - Must embed *full relative paths* in ADR links.
-    - "commit `<feature>: <summary> - <ADRFileName>`"
+    - "commit using conventional format: `feat(planning): create <feature> implementation plan - <PlanFileName>`"
     - complete task
 ```
 
@@ -208,23 +237,40 @@ steps:
         - Suggest model complexity for each step (Opus/Sonnet)
         - Include comprehensive complexity scoring and risk assessment
         - Define explicit success criteria for each step beyond technical completion
+    - Organize steps into logical phases (following template structure):
+        - Group related steps working on same feature/component
+        - Each phase should contain 2-8 steps
+        - Define phase success criteria and verification approach
+        - Specify conventional commit message for each phase
+        - Map dependencies between phases
     - Research codebase:
         - Use Grep/Glob to analyze existing patterns
         - Identify impacted files and dependencies
         - Understand current implementation approaches
     - Write plan:
-        - Copy `archflow/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<adrName>.md`
+        - Copy `~/.archflow/templates/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<planName>.md`
+        - **IMPORTANT**: Use same timestamp as ADR for traceability
         - Fill all sections following template structure
+        - Organize steps into phases with:
+            - Phase name and description
+            - List of step IDs in the phase
+            - Phase-level success criteria
+            - Verification approach
+            - Dependencies on other phases
+            - Commit message (conventional format)
         - Set all steps to `status: scheduled`
+        - Set all phases to `status: scheduled`  
         - Include full relative paths in all references
         - Add comprehensive dependency mapping with cross-feature impact analysis
         - Include structured risk assessment covering technical, business, and timeline factors
-        - Define measurable success criteria for each step
+        - Define measurable success criteria for each step and phase
+        - Design plan to support status updates during execution
     - Run validation gate checks:
         - Verify implementability of all steps
         - Validate complexity estimates and resource requirements
         - Check dependency mapping completeness
     - Update workflow-state.md with planning deliverable status and validation results
-    - Commit plan with descriptive message
+    - Commit plan using conventional format: `feat(planning): create <feature> implementation plan - <PlanFileName>`
+        - Example: `feat(planning): create user authentication implementation plan - 20240115143052-user-authentication-plan.md`
     - Mark all todos as completed
 ```

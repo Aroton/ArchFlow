@@ -6,7 +6,7 @@ name: ArchFlow - Verifying
 groups: ['read', 'edit', 'command']
 source: 'global'
 ```
-Final quality gate—runs verification and marks the plan verified.
+Continuous quality assurance—runs verification after each phase during execution and performs final validation. Ensures all success criteria are met, tests pass, and code quality standards are maintained before commits.
 
 ## 1 Folder Layout
 
@@ -31,29 +31,68 @@ Final quality gate—runs verification and marks the plan verified.
 
 | Artifact                          | Purpose             |
 | --------------------------------- | ------------------- |
-| Plan file (all steps `completed`) | Verification target |
+| Plan file with phases             | Verification target |
+| Phase success criteria            | Verification requirements |
+| Test results                      | Quality validation |
 
 ---
 
 ## 3  Implementation Details
 
+### Continuous Verification Integration
+
+Verification happens at multiple points:
+
+#### Phase-Level Verification (During Execution)
+- Triggered automatically after each phase completes
+- Verifies phase-specific success criteria
+- Runs relevant tests for the phase
+- Ensures linting and builds pass before commits
+- Updates workflow state with phase verification status
+
+#### Final Verification (After All Phases)
+- Comprehensive validation of entire implementation
+- Cross-phase integration testing
+- Business requirement validation
+- Performance and security checks
+- Final quality gate before completion
+
 ### Workflow State Integration
 
-The verifying agent must:
-1. Read `archflow/workflow-state.md` to understand complete development context
-2. Compare implementation against original requirements and architectural decisions
-3. Run comprehensive verification including business validation
-4. Update workflow state with final verification results
-5. Archive workflow state on successful completion
+The verifying process must:
+1. Read `archflow/workflow-state.md` to understand development context
+2. For phase verification:
+   - Verify phase implementation against success criteria
+   - Run phase-specific tests and quality checks
+   - Ensure builds and linting pass
+   - Update plan and workflow state
+3. For final verification:
+   - Compare complete implementation against requirements
+   - Run comprehensive test suite
+   - Validate business requirements
+   - Archive workflow state on success
 
 ### Verification Levels
 
 **Graduated Verification System:**
 ```yaml
 verification_levels:
-  technical_validation:
+  phase_verification:  # Run after each phase
+    automated_checks:
+      - phase_unit_tests
+      - build_verification 
+      - lint_and_type_checking
+      - phase_success_criteria
+    quality_gates:
+      - no_test_failures
+      - no_lint_errors
+      - build_succeeds
+      - criteria_met
+      
+  final_verification:  # Run after all phases
     automated_checks:
       - full_test_suite_execution
+      - cross_phase_integration_tests
       - build_verification
       - lint_and_type_checking
       - security_scanning
@@ -140,13 +179,22 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 
 ### Claude Code Implementation
 
-In Claude Code, the verifying phase:
-* Uses TodoWrite to track verification tasks
-* Runs comprehensive test suites and validation
+In Claude Code, verification is integrated into execution:
+
+#### During Execution (Phase Verification):
+* Automatically triggered after each phase completes
+* Runs phase-specific tests and success criteria checks
+* Ensures all linting and builds pass before commits
+* Updates plan with phase verification status
+* Continues to next phase if verification passes
+* Stops and reports issues if verification fails
+
+#### Final Verification:
+* Uses TodoWrite to track final verification tasks
+* Runs comprehensive test suites across all phases
 * Performs code review comparing implementation to plan
-* Updates plan file with verification status
-* Reports issues clearly to the user
-* Does not delegate - all verification is done within the command
+* Validates all business requirements are met
+* Updates plan file with final verification status
 * Provides detailed report of verification results
 
 ---
@@ -167,32 +215,63 @@ In Claude Code, the verifying phase:
 state: VERIFYING
 agent: archflow-verifying
 delegate: false
+verification_mode: continuous_and_final
 steps:
-    - Run verification suite (unit, integration, linter)
-    - Run code review:
-        - Iterate through all diffs
-        - Validate code conforms to code standards
-        - validate business logic matches plan
-    - Pass?:
-        - "yes - add `verified: true` to plan, commit, `attempt_completion success: true`"
-        - "no - `attempt_completion success: false` with details."
+    # Phase Verification (Called from Execution)
+    - For phase verification:
+        - Read phase success criteria from plan
+        - Run phase-specific unit tests
+        - Run integration tests for phase connections
+        - Execute linting and type checking
+        - Verify build succeeds
+        - Check success criteria are met
+        - If pass: update plan phase status to "verified"
+        - If fail: report issues for recovery
+    
+    # Final Verification (After All Phases)
+    - For final verification:
+        - Run comprehensive test suite (all unit, integration, e2e)
+        - Perform full code review:
+            - Review all commits since plan creation
+            - Validate code conforms to standards
+            - Verify business logic matches plan
+            - Check architectural compliance
+        - Validate all requirements met
+        - Pass?:
+            - "yes - mark plan as fully verified, commit using `chore(verification): complete <feature> verification - <ADRFileName>`, `attempt_completion success: true`"
+            - "no - `attempt_completion success: false` with iteration recommendations"
 ```
 
 ### Claude Code Workflow
 ```yaml
-state: VERIFYING
+state: VERIFYING  
 agent: claude
 delegate: false
+verification_mode: integrated_continuous
 steps:
+    # Phase Verification (Integrated into Execution)
+    - Phase verification is embedded in execution workflow:
+        - Automatically triggered after phase implementation
+        - Reads phase success criteria from plan
+        - Executes phase-specific tests
+        - Runs linting and build checks
+        - Verifies success criteria
+        - Updates plan and workflow state
+        - Commits only after verification passes
+    
+    # Final Verification (Standalone Phase)
     - Read workflow-state.md to understand complete development context
-    - Use TodoWrite to create verification task list
+    - Use TodoWrite to create final verification task list
     - Read completed plan file and all architecture documents
-    - Run Technical Validation:
-        - Execute full test suite (unit, integration, end-to-end)
-        - Run linting and type checking
-        - Check build succeeds
-        - Run security scanning
-        - Document any failures
+    - Run Comprehensive Technical Validation:
+        - Execute full test suite across all implemented phases
+        - Run cross-phase integration tests
+        - Verify all phase success criteria were met
+        - Run linting and type checking on complete codebase
+        - Check final build succeeds
+        - Run security scanning if applicable
+        - Test performance benchmarks
+        - Document any issues found
     - Perform Business Validation:
         - Verify original requirements are met
         - Check acceptance criteria satisfied
@@ -220,7 +299,8 @@ steps:
     - Handle completion:
         - If successful: archive workflow-state.md to workflow-history
         - If failed: provide detailed iteration recommendations
-    - Commit verification results
+    - Commit verification results using conventional format: `chore(verification): complete <feature> verification - <ADRFileName>`
+        - Example: `chore(verification): complete user authentication verification - 20240115143052-user-authentication.md`
     - Present detailed report to user
     - Mark all todos as completed
 ```

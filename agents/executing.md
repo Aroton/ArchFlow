@@ -6,7 +6,7 @@ name: ArchFlow - Executing
 groups: ['read', 'edit', 'command']
 source: 'global'
 ```
-Implements code according to the plan, ensuring each step builds, lints, and tests cleanly.
+Implements code according to the plan phases, executing each phase completely with verification before moving to the next phase. Updates workflow state frequently throughout execution and ensures each phase builds, lints, and tests cleanly before proceeding.
 
 ## 1 Folder Layout
 
@@ -42,9 +42,16 @@ Implements code according to the plan, ensuring each step builds, lints, and tes
 
 The executing agent must:
 1. Read `archflow/workflow-state.md` to understand current iteration context
-2. Update workflow state with execution progress for each step
+2. Update workflow state frequently:
+   - Before starting each phase
+   - After completing each significant step within a phase
+   - When encountering any issues or blockers
+   - After each validation check
+   - Upon phase completion
 3. Run continuous validation during implementation
-4. Update workflow state with validation results before completion
+4. Update plan status as tasks complete
+5. Trigger verification after each phase completes
+6. Continue to next phase without stopping unless issues arise
 
 ### Validation Gate: Execution → Verification
 
@@ -245,16 +252,27 @@ simplified_delegation:
 ### Claude Code Implementation
 
 In Claude Code, the executing phase:
-* Uses TodoWrite to track each implementation step from the plan with dependency analysis
-* Executes steps using smart sequential execution with batch processing opportunities
+* Uses TodoWrite to track each phase and its steps from the plan
+* Executes all steps within a phase before verification
+* Updates workflow state frequently throughout execution:
+  - At phase boundaries
+  - After significant implementation milestones
+  - When validation checks complete
+  - Upon encountering issues
 * Implements progressive validation system with risk-based validation depth
-* Updates plan status with granular tracking (`scheduled` → `in_progress` → `complete` → `validated`)
+* Updates plan status as each step and phase completes
+* Runs comprehensive verification after each phase:
+  - Unit tests for phase functionality
+  - Integration tests for phase connections
+  - Linting and build checks
+  - Success criteria validation
+* Continues to next phase without stopping unless:
+  - Verification fails
+  - User intervention is required
+  - Critical issues are encountered
 * Uses capability matrix to determine validation requirements and recovery strategies
-* Implements step-level rollback and graduated failure recovery
-* Commits using flexible strategy (per-step, per-batch, or per-milestone)
-* Automatically suggests model switching based on complexity scoring
-* Provides user consultation at iteration boundaries for complex failures
-* Maintains execution context and technical debt tracking across recovery attempts
+* Commits after successful phase verification
+* Maintains execution context and technical debt tracking across phases
 
 ---
 
@@ -286,7 +304,12 @@ steps:
                 - run lint, fix any issues
                 - run unit test, fix any issues
                 - "Set `step.status: complete`"
-                - "Commit `<feature>: <summary> - <ADRFileName> - step<id>`"
+                - "Commit using conventional format based on step type:"
+                - "  - `feat(component): implement <feature> - step<id>`"
+                - "  - `fix(component): resolve <issue> - step<id>`"
+                - "  - `refactor(component): improve <aspect> - step<id>`"
+                - "  - `test(component): add <test> - step<id>`"
+                - "  - `docs(component): update <docs> - step<id>`"
                 - Complete task.
     - Complete task
 ```
@@ -296,89 +319,102 @@ steps:
 state: EXECUTING
 agent: claude
 delegate: false
-execution_strategy: smart_sequential_with_progressive_validation
+execution_strategy: phase_based_with_continuous_verification
 steps:
     # Execution Planning & Analysis
     - Read workflow-state.md to understand current iteration context
-    - Use TodoWrite to create task list from plan steps
-    - Read plan file to understand all implementation steps with dependencies
-    - Analyze step dependencies and build execution graph:
-        - Identify critical path (longest dependency chain)
-        - Group independent steps for batch processing
-        - Calculate optimal execution order
-        - Determine validation strategy per step based on complexity score
+    - Use TodoWrite to create task list organized by phases
+    - Read plan file to understand all phases and their steps
+    - Analyze phase structure:
+        - Identify phase boundaries and dependencies
+        - Group related steps within each phase
+        - Determine verification requirements per phase
+        - Plan workflow state update points
     
-    # Smart Sequential Execution with Progressive Validation
-    - For each step/batch in optimized order:
-        - Mark todo(s) as in_progress
-        - Update plan file: set step.status to "in_progress"
-        - Update workflow-state.md with current execution progress
+    # Phase-Based Execution with Continuous Verification
+    - For each phase in the plan:
+        - Mark phase todo as in_progress
+        - Update workflow-state.md: mark phase as "executing"
         
-        # Capability Matrix Validation Assignment
-        - Determine validation level based on complexity score:
-            - Score 0-5: fast_checks only
-            - Score 6-8: fast_checks + medium_checks
-            - Score 9-12: fast_checks + medium_checks + selective_heavy_checks
-            - Score 13+: full_validation_suite
-        
-        # Pre-Step Validation (Fast Checks)
-        - Verify step prerequisites met (dependency analysis)
-        - Check architectural assumptions still valid
-        - Confirm dependencies available
-        
-        # Implementation with Progressive Validation
-        - Implement code changes for the step:
-            - Read all files specified in step
-            - Make necessary modifications
-            - Create new files if needed
+        # Execute All Steps in Phase
+        - For each step in the phase:
+            - Update workflow-state.md with step progress
+            - Update plan file: set step.status to "in_progress"
             
-        # Fast Validation (Immediate)
-        - Run syntax validation
-        - Check imports and dependencies
-        - Run type checking if applicable
-        - Basic linting checks
+            # Implementation
+            - Implement code changes for the step:
+                - Read all files specified in step
+                - Make necessary modifications  
+                - Create new files if needed
+            
+            # Step-Level Quick Validation
+            - Run syntax validation
+            - Check imports and dependencies
+            - Basic linting checks
+            - Update workflow-state.md with validation results
+            
+            # Step Completion
+            - Update plan file: set step.status to "complete"
+            - Update workflow-state.md with step completion
         
-        # Risk-Based Additional Validation
-        - If medium/high complexity: run affected unit tests
-        - If high complexity: run integration tests for modified endpoints
-        - If architectural impact: validate compliance
+        # Phase Verification (After All Steps Complete)
+        - Update workflow-state.md: mark phase as "verifying"
+        - Run comprehensive phase verification:
+            - Execute all unit tests for phase functionality
+            - Run integration tests for phase connections
+            - Full linting and build verification
+            - Verify phase success criteria from plan
+            - Test any user-facing functionality if applicable
         
-        # Failure Recovery with Graduated Escalation
-        - Handle validation failures using capability matrix:
-            - Attempt 1: Local fix within step scope
-            - Attempt 2: Alternative implementation approach
-            - Attempt 3: User consultation + scope reduction
-            - Attempt 4: Step rollback with technical debt tracking
-            - Attempt 5: Escalate to planning iteration
+        # Handle Verification Results
+        - If verification passes:
+            - Update plan: mark phase as "verified"
+            - Update workflow-state.md: phase complete
+            - Commit all phase changes using commit message from plan:
+                - Use the phase's predefined commit message
+                - Follow conventional commit format
+                - Examples:
+                    - `feat(auth): implement core authentication models`
+                    - `feat(auth): add authentication endpoints and middleware`
+                    - `feat(ui): add authentication components and routes`
+                - Include phase context in commit body if needed
+            - Continue to next phase WITHOUT STOPPING
         
-        # Rollback Mechanisms
-        - Step-level rollback: Git reset to previous step state
-        - Batch-level rollback: Undo entire related batch
-        - Checkpoint rollback: Return to milestone validation point
+        - If verification fails:
+            - Update workflow-state.md with failure details
+            - Implement recovery strategy:
+                - Attempt fixes within phase scope
+                - If critical: stop and request user intervention
+                - If minor: document as technical debt and continue
+            - Re-run verification after fixes
         
-        # Completion and Tracking
-        - Update plan file: set step.status to "complete"
-        - Flexible commit strategy:
-            - Per-step commits for independent changes
-            - Batch commits for related changes
-            - Milestone commits for major functionality
-        - Mark todo as completed
-        - Update technical debt tracking if applicable
+        # User Verification Points
+        - If phase requires user verification (UI/UX changes):
+            - Pause execution
+            - Request user to verify functionality
+            - Wait for confirmation before continuing
+        
+        # Phase Completion
+        - Mark phase todo as completed
+        - Update workflow-state.md with phase summary
     
-    # Milestone and Final Validation
-    - Run milestone validation every 5 steps (medium checks)
-    - Run final validation gate checks:
-        - Verify all steps complete with proper validation
-        - Run comprehensive test suite (heavy checks)
-        - Validate architectural compliance
-        - Check performance benchmarks if applicable
+    # Final Validation (After All Phases)
+    - Update workflow-state.md: "final_validation"
+    - Run comprehensive validation:
+        - Full test suite across all implemented features
+        - End-to-end integration tests
+        - Performance benchmarks if applicable
+        - Security scanning if relevant
+        - Final build and deployment readiness check
     
     # Context Preservation and Completion
-    - Update workflow-state.md with execution completion and validation results
-    - Document any technical debt or deferred steps
-    - Provide detailed execution report with metrics:
-        - Steps completed vs deferred
-        - Validation failures and recovery actions
+    - Update workflow-state.md with execution completion
+    - Update plan with final status
+    - Document any technical debt or deferred items
+    - Provide detailed execution report:
+        - Phases completed successfully
+        - Verification results per phase
+        - Any issues encountered and resolutions
         - Technical debt introduced
-        - Performance impact
+        - Next recommended actions
 ```

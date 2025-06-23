@@ -1,91 +1,185 @@
 # ArchFlow Installation and Setup
 
-This document provides instructions on how to set up your global RooCode profiles and initialize a new workspace using the Archflow structure.
+This document provides instructions on how to install ArchFlow for either RooCode or Claude Code, and how to initialize new projects with the ArchFlow structure.
 
 ## Prerequisites
 
--   Bash shell (common on Linux and macOS, available on Windows via WSL or Git Bash)
--   VS Code with the RooCode extension installed.
--   This ArchFlow repository cloned or downloaded to your local machine.
+- Bash shell (common on Linux and macOS, available on Windows via WSL or Git Bash)
+- For RooCode: VS Code with the RooCode extension installed
+- For RooCode: `yq` command-line tool (for YAML conversion)
+- For Claude Code: Claude Code CLI installed
+- This ArchFlow repository cloned or downloaded to your local machine
 
-## Setup Steps
+## Installation
+
+ArchFlow can be installed for either RooCode or Claude Code (or both). The installation scripts will:
+- Copy templates to `~/.archflow/templates/`
+- Copy agent documentation to `~/.archflow/agents/`
+- Set up the appropriate configuration for your chosen tool
 
 ### 1. Make Scripts Executable
 
-Before running the scripts, you need to make them executable. Navigate to the root directory of this ArchFlow repository in your terminal and run:
+Navigate to the root directory of this ArchFlow repository and run:
 
 ```bash
-chmod +x update_global_modes.sh init_adr_workspace.sh
+chmod +x install_roocode.sh install_claude.sh init_adr_workspace.sh
 ```
 
-### 2. Update Global RooCode Profiles (Optional)
+### 2A. Install for RooCode
 
-This step synchronizes the custom modes defined in this repository (`custom_modes.json`) with your global VS Code RooCode settings. This makes the Archflow-specific modes (like the Archflow MicroManager) available in all your projects.
-
-**From the root directory of the ArchFlow repository**, run the following script:
+This installs ArchFlow custom modes and templates for use with RooCode:
 
 ```bash
-./update_global_modes.sh
+./install_roocode.sh
 ```
 
-The script will copy `custom_modes.json` to the appropriate VS Code settings directory. You might need to restart VS Code for the changes to be fully recognized.
+The script will:
+- Install templates to `~/.archflow/templates/`
+- Copy agent documentation to `~/.archflow/agents/`
+- Convert and install custom modes to your RooCode settings directory
+- Create a backup of existing custom modes if present
 
-### 3. Initialize a New Archflow Workspace
+**Note**: You'll need to restart VS Code for the custom modes to take effect.
 
-This script sets up the standard folder structure and copies necessary template files for the Archflow workflow into a directory of your choice.
+### 2B. Install for Claude Code
 
-**Option A: Running from any directory (Recommended for PATH setup)**
+This installs ArchFlow commands and templates for use with Claude Code:
 
-If you add the ArchFlow repository directory to your system's PATH environment variable, you can run the script directly from the directory you want to initialize.
-
-1.  **Add ArchFlow to PATH (Example for bash/zsh):**
-    Add the following line to your shell configuration file (e.g., `~/.bashrc`, `~/.zshrc`), replacing `/path/to/your/ArchFlow` with the actual path to this repository:
-    ```bash
-    export PATH="/path/to/your/ArchFlow:$PATH"
-    ```
-    Reload your shell configuration (e.g., `source ~/.bashrc`) or open a new terminal.
-
-2.  **Navigate to your desired workspace directory:**
-    ```bash
-    mkdir my-new-project
-    cd my-new-project
-    ```
-
-3.  **Run the initialization script:**
-    ```bash
-    init_adr_workspace.sh
-    ```
-
-**Option B: Running with Full Path**
-
-If you prefer not to modify your PATH, you can run the script using its full path.
-
-1.  **Navigate to your desired workspace directory:**
-    ```bash
-    mkdir my-new-project
-    cd my-new-project
-    ```
-
-2.  **Run the initialization script using its full path:**
-    Replace `/path/to/your/ArchFlow` with the actual path to this repository.
-    ```bash
-    /path/to/your/ArchFlow/init_adr_workspace.sh
-    ```
-
-**After running the script:**
-
-The script will create the following structure in your current directory (`my-new-project` in the examples):
-
-```
-.
-├── architecture/
-│   ├── overall-architecture.md
-│   ├── features/
-│   │   └── template.md
-│   ├── adr/
-│   │   └── 0000-template.md
-│   └── diagrams/
-├── plans/
+```bash
+./install_claude.sh
 ```
 
-You can now initialize a git repository (`git init`) and start your project using the Archflow development process.
+The script will:
+- Install templates to `~/.archflow/templates/`
+- Copy agent documentation to `~/.archflow/agents/`
+- Install the `/archflow` command to `~/.claude/commands/`
+
+After installation, you can use the `/archflow "feature description"` command in Claude Code.
+
+## Initializing a New ArchFlow Project
+
+Once ArchFlow is installed, you can initialize new projects with the ArchFlow structure.
+
+### Option A: Using Global Templates (Recommended)
+
+After running either install script, templates are available globally:
+
+1. Navigate to your desired project directory:
+   ```bash
+   mkdir my-new-project
+   cd my-new-project
+   ```
+
+2. Run the initialization script:
+   ```bash
+   /path/to/ArchFlow/init_adr_workspace.sh
+   ```
+
+The script will use templates from `~/.archflow/templates/` if available, or fall back to local templates.
+
+### Option B: Add to PATH for Convenience
+
+Add the ArchFlow directory to your PATH for easier access:
+
+1. Add to your shell configuration file (e.g., `~/.bashrc`, `~/.zshrc`):
+   ```bash
+   export PATH="/path/to/your/ArchFlow:$PATH"
+   ```
+
+2. Reload your shell configuration:
+   ```bash
+   source ~/.bashrc  # or ~/.zshrc
+   ```
+
+3. Now you can run from any directory:
+   ```bash
+   cd my-new-project
+   init_adr_workspace.sh
+   ```
+
+## Project Structure
+
+The initialization script creates the following structure in the `archflow` subdirectory:
+
+```
+my-new-project/
+└── archflow/
+    ├── architecture/
+    │   ├── overall-architecture.md
+    │   ├── features/
+    │   │   └── template.md
+    │   ├── adr/
+    │   │   └── 0000-template.md
+    │   └── diagrams/
+    └── plans/
+        └── 0000-template.md
+```
+
+## Using ArchFlow
+
+### With RooCode
+
+1. Open your project in VS Code
+2. Select an ArchFlow mode from the RooCode mode selector:
+   - **ArchFlow**: Main orchestrator mode
+   - **ArchFlow - Architecting**: Architecture phase mode
+   - **ArchFlow - Planning**: Planning phase mode
+   - **ArchFlow - Executing**: Execution phase mode
+   - **ArchFlow - Verifying**: Verification phase mode
+
+### With Claude Code
+
+1. Open your project in Claude Code
+2. Use the `/archflow` command:
+   ```
+   /archflow "Create a user authentication system with JWT tokens"
+   ```
+
+The command will guide you through the complete ArchFlow workflow from architecture to verification.
+
+## Updating ArchFlow
+
+To update ArchFlow to the latest version:
+
+1. Pull the latest changes from the ArchFlow repository
+2. Run the appropriate install script again:
+   - For RooCode: `./install_roocode.sh`
+   - For Claude Code: `./install_claude.sh`
+
+The install scripts will update your templates and configurations while preserving any backups.
+
+## Troubleshooting
+
+### RooCode Issues
+
+**Custom modes not appearing:**
+- Ensure VS Code has been restarted after installation
+- Check that the RooCode extension is installed and enabled
+- Verify that `yq` is installed: `which yq`
+
+**Installation fails with yq error:**
+- Install yq:
+  - Ubuntu/Debian: `sudo snap install yq`
+  - macOS: `brew install yq`
+  - Other: See https://github.com/mikefarah/yq
+
+### Claude Code Issues
+
+**Command not found:**
+- Verify installation: `ls -la ~/.claude/commands/archflow*`
+- Ensure Claude Code is up to date
+- Try restarting Claude Code
+
+### Template Issues
+
+**Templates not found:**
+- Check installation: `ls -la ~/.archflow/templates/`
+- Re-run the appropriate install script
+- The init script will fall back to local templates if global ones aren't found
+
+## Support
+
+For issues or questions:
+- Check the agent documentation in `~/.archflow/agents/`
+- Review the main README.md for workflow details
+- Submit issues to the ArchFlow repository

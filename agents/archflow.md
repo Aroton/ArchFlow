@@ -7,11 +7,17 @@ groups: ['read']
 source: 'global'
 ```
 
-The Orchestrator coordinates the four phase‑specific agents (**Architecting → Planning → Executing → Verifying**) and passes only minimal context and artifacts to each phase.
+The Orchestrator coordinates the four phase‑specific agents (**Architecting → Planning → Execute/Verify Loop**) and manages the overall workflow state.
 
 ## Core Functionality
 
-The orchestrator manages the overall workflow, delegating to specialized agents in sequence. It monitors success/failure, coordinates handoff between phases, and manages iteration state when validation gates fail. The orchestrator maintains a workflow state document that tracks iterations, deliverable validation, and provides complete audit trail.
+The orchestrator manages the overall workflow, delegating to specialized agents in sequence. It monitors success/failure, coordinates handoff between phases, and manages iteration state when validation gates fail.
+
+## Prerequisites
+
+Before using ArchFlow, ensure templates are installed:
+- Run `install_claude.sh` or `install_roocode.sh` to install templates to `~/.archflow/templates/`
+- Templates will be copied from this global location when creating new ADRs, plans, and features
 
 ## Workflow State Management
 
@@ -21,6 +27,9 @@ The orchestrator maintains `archflow/workflow-state.md` to track:
 - Deliverable completion status
 - Validation gate results
 - Context preservation across iterations
+- Real-time execution progress within phases
+- Phase-level completion status
+- Plan updates as tasks complete
 
 ### Folder Structure
 ```
@@ -31,30 +40,30 @@ archflow/
 └── temp/                          # Transient files (not tracked)
 ```
 
-### Iteration Logic
+### Commit Strategy
 
-**Validation Gates:**
-- **Architecture → Planning**: Technical feasibility, dependency availability, requirement clarity
-- **Planning → Execution**: Step implementability, complexity bounds, resource availability  
-- **Execution → Verification**: Implementation completeness, build/test success
-- **Verification → Complete**: Requirements satisfaction, quality standards met
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/) format. Each phase handles its own commits:
+- **Architecture & Planning**: One commit after validation (see respective docs)
+- **Execution**: One commit per phase after verification (see `executing.md`)
+- **Final Verification**: One commit for completion (see `verifying.md`)
 
-**Iteration Triggers:**
-- **Minor Iteration**: Return to previous phase (missing details, scope adjustments)
-- **Major Iteration**: Return to architecture (fundamental design flaws, invalid assumptions)
-- **Abort Workflow**: Terminate on impossible requirements or resource constraints
+### Validation Gates & Iteration Logic
+
+Each phase has specific validation gates defined in their respective documentation:
+- **Architecture → Planning**: See `architecting.md` for validation criteria
+- **Planning → Execution**: See `planning.md` for validation criteria
+- **Phase Execution → Next Phase**: See `executing.md` for per-phase verification
+- **Final Verification**: See `verifying.md` for comprehensive validation
+
+The orchestrator determines iteration targets based on validation failures and routes execution accordingly.
 
 ## Implementation Details
 
 ### Roo Code Implementation
 
-#### 1. Delegated Task Contract (must be injected verbatim in every `new_task`)
+#### 1. Delegated Task Contract
 
-When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
-
-* Context: All relevant details from the parent task, ADR, Feature Architecture, original prompt, and current iteration context from workflow-state.md.
-* Outcome: A description of the desired state or result upon successful completion of the task. This should be the completion of an agent workflow (`archflow-architecting`, `archflow-planning`, `archflow-executing`, `archflow-verifying`)
-* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution and validation gate status.
+The orchestrator delegates complete phase workflows to specialized agents. Each agent's documentation defines its specific contract requirements and validation criteria.
 
 #### 2. Scope & Delegation Rules
 
@@ -84,20 +93,15 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 #### Internal Orchestration Flow
 1. **Initialize Workflow State** - Create or load archflow/workflow-state.md
 2. **Create Master Todo List** - High-level phases + iteration tracking
-3. **Execute Phase Sequence** with validation gates:
-   - **Architecting Phase** → Validation Gate → **Planning Phase** 
-   - **Planning Phase** → Validation Gate → **Executing Phase**
-   - **Executing Phase** → Validation Gate → **Verifying Phase**
-   - **Verifying Phase** → Validation Gate → **Complete**
+3. **Execute Phase Sequence** with validation gates and stops as defined in each phase documentation
 4. **Handle Iterations** - On validation failure, route to appropriate phase with context
 5. **Archive Workflow** - Move workflow-state.md to archive on successful completion
 
 #### Phase Integration
-Each phase uses its documented Claude Code workflow but is executed within the unified command:
-- **Architecting**: Creates ADR, Feature Architecture, Overall Architecture updates
-- **Planning**: Creates detailed implementation plan with complexity scoring
-- **Executing**: Implements all steps with continuous validation  
-- **Verifying**: Runs comprehensive verification (technical, business, quality)
+Each phase executes its documented workflow within the unified command:
+- **Architecting**: See `architecting.md` for requirements gathering and architecture creation
+- **Planning**: See `planning.md` for phase grouping and plan creation  
+- **Execute/Verify Loop**: See `executing.md` and `verifying.md` for phase-based implementation with continuous verification
 
 #### Todo Management Strategy
 - **Level 1 Todos**: Master workflow phases (Architecting, Planning, Executing, Verifying)
@@ -106,7 +110,15 @@ Each phase uses its documented Claude Code workflow but is executed within the u
 
 ---
 
-## 3  Inputs
+## Phase Documentation References
+
+Detailed phase implementations are documented separately:
+- **Architecting Phase**: See [`architecting.md`](./architecting.md) - Requirements gathering, ADR creation, validation gates
+- **Planning Phase**: See [`planning.md`](./planning.md) - Phase grouping, complexity scoring, validation gates
+- **Executing Phase**: See [`executing.md`](./executing.md) - Phase-based execution, continuous verification
+- **Verifying Phase**: See [`verifying.md`](./verifying.md) - Phase and final verification criteria
+
+## Inputs
 
 * High‑level feature request (user)
 
@@ -153,33 +165,17 @@ steps:
     - "Initialize workflow state document or load existing iteration context"
     - "Create Level 1 todos for master workflow phases"
     
-    # Phase Orchestration Loop (with iteration support)
-    - "PHASE: ARCHITECTING"
-    - "Execute architecting workflow (from architecting.md Claude Code workflow)"
-    - "Run Architecture → Planning validation gate"
-    - "On validation pass: proceed to PLANNING"
-    - "On validation fail: update workflow state, determine iteration target"
-    
-    - "PHASE: PLANNING" 
-    - "Execute planning workflow (from planning.md Claude Code workflow)"
-    - "Run Planning → Execution validation gate"
-    - "On validation pass: proceed to EXECUTING"
-    - "On validation fail: update workflow state, determine iteration target"
-    
-    - "PHASE: EXECUTING"
-    - "Execute execution workflow (from executing.md Claude Code workflow)"
-    - "Run Execution → Verification validation gate"
-    - "On validation pass: proceed to VERIFYING"
-    - "On validation fail: update workflow state, determine iteration target"
-    
-    - "PHASE: VERIFYING"
-    - "Execute verification workflow (from verifying.md Claude Code workflow)"
-    - "Run Verification → Complete validation gate"
-    - "On validation pass: archive workflow state and complete successfully"
-    - "On validation fail: update workflow state, determine iteration target"
+    # Phase Execution
+    - "Execute ARCHITECTING phase (see architecting.md for detailed workflow)"
+    - "Run validation gate → STOP for user confirmation"
+    - "Execute PLANNING phase (see planning.md for detailed workflow)"
+    - "Run validation gate → STOP for user confirmation"
+    - "Execute EXECUTE/VERIFY LOOP (see executing.md and verifying.md for detailed workflow)"
+    - "Continue phases without stopping unless issues arise"
+    - "Run final validation after all phases complete"
     
     # Iteration Handling
-    - "If any validation gate fails:"
+    - "If any validation gate or phase fails:"
     - "  - Increment iteration counter"
     - "  - Update workflow-state.md with failure context"
     - "  - Route to determined target phase (current, previous, or architecture)"
@@ -187,7 +183,8 @@ steps:
     - "If max iterations exceeded: provide detailed failure report and exit"
     
     # Completion
-    - "Archive workflow-state.md to archflow/archive/workflow-history/"
+    - "Archive workflow-state.md to archflow/archive/workflow-history/YYYYMMDDHHMMSS-<feature>-workflow.md"
+    - "**IMPORTANT**: Use `date +%Y%m%d%H%M%S` format for timestamp"
     - "Mark all Level 1 todos as completed"
     - "Provide comprehensive completion report"
 ```
