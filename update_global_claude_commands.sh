@@ -53,10 +53,7 @@ fi
 
 # List of ArchFlow command files to copy
 ARCHFLOW_COMMANDS=(
-    "archflow-architect.md"
-    "archflow-plan.md"
-    "archflow-execute.md"
-    "archflow-verify.md"
+    "archflow.md"
 )
 
 # Copy each command file

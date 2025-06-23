@@ -61,20 +61,54 @@ The user may be prompted to switch models based on task complexity.
 
 ## 4  Implementation Details
 
+### Workflow State Integration
+
+The planning agent must:
+1. Read `archflow/workflow-state.md` to understand current iteration context
+2. Update workflow state with planning deliverable status
+3. Run validation gate checks before completion
+4. Update workflow state with validation results
+
+### Validation Gate: Planning → Execution
+
+**Exit Criteria:**
+- All plan steps are implementable with available technology
+- Complexity estimates are within reasonable bounds (suggest refactoring if >15 files per step)
+- Resource requirements are clearly defined and available
+- Dependencies between steps are explicitly mapped
+- Each step has clear success criteria and testing approach
+
+**Validation Process:**
+```yaml
+planning_validation:
+  implementability_check:
+    - verify_all_dependencies_available
+    - validate_technology_choices
+    - confirm_api_compatibility
+  complexity_analysis:
+    - assess_step_complexity_scores
+    - identify_high_risk_steps
+    - validate_resource_estimates
+  integration_validation:
+    - map_step_dependencies
+    - identify_potential_conflicts
+    - validate_testing_approach
+```
+
 ### Roo Code Implementation
 
 #### Delegated Task Contract (must be injected verbatim in every `new_task`)
 
 When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
 
-* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, and how this specific step fits into the larger plan.
+* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, current iteration context from workflow-state.md, and how this specific step fits into the larger plan.
 * Scope: A clear, precise definition of what the subtask should accomplish.
 * Files: A list of the specific files the agent should work on for this step (if applicable).
 * Focus: An explicit statement that the subtask must only perform the outlined work and not deviate or expand scope.
-* Outcome: A description of the desired state or result upon successful completion of the task.
-* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
+* Outcome: A description of the desired state or result upon successful completion of the task, including validation gate passage.
+* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update, validation gate results, and commit details. This summary is crucial for tracking progress.
 * Instruction Priority: A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
-* Workflow Steps: Include all relevant workflow steps the task should complete
+* Workflow Steps: Include all relevant workflow steps the task should complete, including validation checks
 * Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
 #### Scope & Delegation Rules
@@ -83,8 +117,10 @@ When the Orchestrator delegates a task using the new_task tool, the instructions
 * May delegate to `researcher` for code inspection.
 * Must NOT include code snippets inside the plan.
 * Status can be (`scheduled`, `in_progress`, `complete`)
+* Must update workflow-state.md with deliverable status and validation results
 * **Important** **Do not include** code in the Delegated Task Contract.
 * **Important** **Must do research before creating a plan**
+* **Important** **Must pass validation gate before completion**
 
 ### Claude Code Implementation
 
@@ -146,13 +182,15 @@ state: PLANNING
 agent: claude
 delegate: false
 steps:
+    - Read workflow-state.md to understand current iteration context
     - Use TodoWrite to create task list for planning phase
     - Review architecture docs (ADR and Feature Architecture)
     - Identify external dependencies using package.json analysis
     - Decompose work into atomic steps:
         - Each step should be standalone and testable
-        - Each step should modify at most 10 files
+        - Each step should modify reasonable number of files (suggest refactoring if >15 files)
         - Suggest model complexity for each step (Opus/Sonnet)
+        - Include complexity scoring and risk assessment
     - Research codebase:
         - Use Grep/Glob to analyze existing patterns
         - Identify impacted files and dependencies
@@ -162,6 +200,12 @@ steps:
         - Fill all sections following template structure
         - Set all steps to `status: scheduled`
         - Include full relative paths in all references
+        - Add dependency mapping and risk assessment
+    - Run validation gate checks:
+        - Verify implementability of all steps
+        - Validate complexity estimates and resource requirements
+        - Check dependency mapping completeness
+    - Update workflow-state.md with planning deliverable status and validation results
     - Commit plan with descriptive message
     - Mark all todos as completed
 ```

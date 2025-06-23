@@ -40,29 +40,70 @@ The architecting workflow goes through a series of steps to create new architect
 
 ## 3  Implementation Details
 
+### Workflow State Integration
+
+The architecting agent must:
+1. Read `archflow/workflow-state.md` to understand current iteration context and any previous iteration learnings
+2. Update workflow state with architecture deliverable status as work progresses
+3. Run validation gate checks before completion
+4. Update workflow state with validation results
+
+### Validation Gate: Architecture → Planning
+
+**Exit Criteria:**
+- ADR addresses all stated requirements with clear problem statement and solution rationale
+- Technical approach is feasible with current technology stack and available dependencies
+- Performance, security, and scalability requirements are addressable with chosen approach
+- No conflicting business requirements or architectural constraints
+- Dependencies are available and version-compatible
+- Solution aligns with existing system architecture and patterns
+
+**Validation Process:**
+```yaml
+architecture_validation:
+  adr_completeness:
+    - problem_statement_clear: true
+    - solution_approaches_evaluated: true
+    - decision_rationale_documented: true
+    - consequences_identified: true
+    - alternatives_considered: true
+  technical_feasibility:
+    - dependencies_available_and_compatible: true
+    - technology_stack_alignment: true
+    - performance_requirements_addressable: true
+    - security_requirements_addressable: true
+  business_alignment:
+    - requirements_fully_addressed: true
+    - constraints_respected: true
+    - success_criteria_defined: true
+    - stakeholder_concerns_addressed: true
+```
+
 ### Roo Code Implementation
 
 #### Delegated Task Contract (must be injected verbatim in every `new_task`)
 
 When the Orchestrator delegates a task using the new_task tool, the instructions provided to the specialized agent must include:
 
-* Context: All relevant details from the parent task, ADR, Feature Architecture, overall goal, and how this specific step fits into the larger plan.
+* Context: All relevant details from the parent task, current iteration context from workflow-state.md, previous iteration learnings, and overall goal.
 * Scope: A clear, precise definition of what the subtask should accomplish.
 * Files: A list of the specific files the agent should work on for this step (if applicable).
 * Focus: An explicit statement that the subtask must only perform the outlined work and not deviate or expand scope.
-* Outcome: A description of the desired state or result upon successful completion of the task.
-* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, plan status update (if applicable), and commit details (if applicable). This summary is crucial for tracking progress.
+* Outcome: A description of the desired state or result upon successful completion of the task, including validation gate passage.
+* Completion: An instruction to use the attempt_completion tool upon finishing. The result parameter should contain a concise yet thorough summary confirming task execution, validation gate results, and commit details. This summary is crucial for tracking progress.
 * Instruction Priority: A statement clarifying that these specific subtask instructions override any conflicting general instructions the agent mode might have.
-* Workflow Steps: Include all relevant workflow steps the task should complete
+* Workflow Steps: Include all relevant workflow steps the task should complete, including validation checks
 * Mode Restriction: A statement prohibiting the subtask agent from switching modes itself; it must complete its assigned task and then call attempt_completion.
 
 #### Scope & Delegation Rules
 
 * Creates/updates ADRs, Feature docs, Overall Architecture, and commits changes.
 * May delegate ONLY to `Researcher`.
+* Must update workflow-state.md with deliverable status and validation results.
 * On failure, report back; do not escalate internally.
 * **Important** **Do not include** code in the Delegated Task Contract.
 * **Important** **Must do research before creating an architecture**
+* **Important** **Must pass validation gate before completion**
 
 ### Claude Code Implementation
 
@@ -119,15 +160,18 @@ state: ARCHITECTING
 agent: claude
 delegate: false
 steps:
+    - Read workflow-state.md to understand current iteration context and learnings
     - Use TodoWrite to create task list for architecture phase
     - Gather Context:
         - Load existing architecture docs
         - Use Grep/Glob to search codebase for relevant patterns
         - Analyze project structure and dependencies
+        - Review any previous iteration context and learnings
     - Create ADR:
         - Copy `archflow/architecture/adr/0000-template.md` → `archflow/architecture/adr/YYYYMMDDHHMMSS-<adrName>.md`
         - Ask clarifying questions if needed
         - Fill sections with full relative paths in links
+        - Address any issues from previous iterations
     - Update or create feature architecture:
         - If new, copy `archflow/architecture/features/template.md` → `archflow/architecture/features/YYYYMMDDHHMMSS-<featureName>.md`
         - Ensure consistency with ADR
@@ -135,6 +179,12 @@ steps:
     - Update overall architecture:
         - Read `archflow/architecture/overall-architecture.md`
         - Update with major architectural changes
+    - Run validation gate checks:
+        - Verify ADR completeness and clarity
+        - Validate technical feasibility with current stack
+        - Check business alignment and requirement coverage
+        - Ensure no conflicting constraints
+    - Update workflow-state.md with architecture deliverable status and validation results
     - Commit changes with descriptive message
     - Mark all todos as completed
 ```
