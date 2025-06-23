@@ -87,19 +87,30 @@ Complete end-to-end ArchFlow workflow orchestration for feature development.
 - **Identify external dependencies** using package.json analysis
 - **Decompose work into atomic steps**:
   - Each step should be standalone and testable
-  - Each step should modify reasonable number of files (suggest refactoring if >15 files)
+  - Apply comprehensive complexity scoring system:
+    - Lines of code impact (1-5 scale)
+    - Files affected count (weighted by type)
+    - Dependency chain depth (1-3 scale)
+    - Technical risk level (1-5 scale)
+    - Integration complexity (1-3 scale)
+    - Suggest refactoring if total score >12
+  - Define explicit success criteria for each step (technical, functional, quality, integration)
   - Suggest model complexity for each step (Opus/Sonnet)
-  - Include complexity scoring and risk assessment
+  - Include comprehensive risk assessment (technical, business, timeline)
+  - Create dependency mapping with cross-feature impact analysis
 - **Research codebase**:
   - Use Grep/Glob to analyze existing patterns
   - Identify impacted files and dependencies
   - Understand current implementation approaches
 - **Write plan**:
   - Copy `archflow/plans/0000-template.md` → `archflow/plans/YYYYMMDDHHMMSS-<adrName>.md`
-  - Fill all sections following template structure
+  - Fill all sections following template structure including:
+    - Risk Assessment (technical, business, timeline risks)
+    - Dependency Mapping (step dependencies and cross-feature impact)
+    - Complexity Scoring for each step with detailed breakdown
+    - Explicit success criteria for each step (technical, functional, quality, integration)
   - Set all steps to `status: scheduled`
   - Include full relative paths in all references
-  - Add dependency mapping and risk assessment
 - **Commit plan** with descriptive message
 
 **Run Planning → Execution validation gate**:

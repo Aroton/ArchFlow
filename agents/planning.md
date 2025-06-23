@@ -73,10 +73,11 @@ The planning agent must:
 
 **Exit Criteria:**
 - All plan steps are implementable with available technology
-- Complexity estimates are within reasonable bounds (suggest refactoring if >15 files per step)
-- Resource requirements are clearly defined and available
-- Dependencies between steps are explicitly mapped
-- Each step has clear success criteria and testing approach
+- Complexity scores are within acceptable bounds based on comprehensive scoring system
+- Resource requirements are clearly defined and available with risk mitigation
+- Dependencies between steps are explicitly mapped with impact analysis
+- Each step has explicit success criteria beyond technical completion
+- Risk assessment completed for technical, business, and timeline factors
 
 **Validation Process:**
 ```yaml
@@ -86,13 +87,23 @@ planning_validation:
     - validate_technology_choices
     - confirm_api_compatibility
   complexity_analysis:
-    - assess_step_complexity_scores
-    - identify_high_risk_steps
-    - validate_resource_estimates
+    - calculate_complexity_scores_per_step:
+        - lines_of_code_impact: 1-5 scale
+        - files_affected_count: weighted by file type
+        - dependency_chain_depth: 1-3 scale
+        - technical_risk_level: 1-5 scale
+        - integration_complexity: 1-3 scale
+    - identify_high_risk_steps_above_threshold
+    - validate_resource_estimates_with_buffers
+  risk_assessment:
+    - technical_risks: dependency failures, integration issues, performance
+    - business_risks: scope creep, requirement changes, stakeholder alignment
+    - timeline_risks: complexity underestimation, external dependencies
   integration_validation:
-    - map_step_dependencies
-    - identify_potential_conflicts
-    - validate_testing_approach
+    - map_step_dependencies_with_impact_analysis
+    - identify_potential_conflicts_and_mitigation
+    - validate_comprehensive_testing_approach
+    - cross_feature_impact_assessment
 ```
 
 ### Roo Code Implementation
@@ -158,7 +169,9 @@ steps:
         - be shippable
         - be buildable
         - be tested
-        - have at most 10 files
+        - use complexity scoring instead of rigid file limits (score >12 suggests refactoring)
+        - include explicit success criteria (technical, functional, quality, integration)
+        - have risk assessment and dependency mapping
         - Analyze the work and assign the appropriate agentMode (intern, junior, midlevel, senior)
     -   state: PLANNING-RESEARCHING
         agent: researcher
@@ -188,9 +201,13 @@ steps:
     - Identify external dependencies using package.json analysis
     - Decompose work into atomic steps:
         - Each step should be standalone and testable
-        - Each step should modify reasonable number of files (suggest refactoring if >15 files)
+        - Apply complexity scoring system instead of rigid file limits:
+            - Calculate complexity score based on multiple factors
+            - Suggest refactoring if complexity score exceeds threshold
+            - Consider lines changed, dependencies affected, risk level
         - Suggest model complexity for each step (Opus/Sonnet)
-        - Include complexity scoring and risk assessment
+        - Include comprehensive complexity scoring and risk assessment
+        - Define explicit success criteria for each step beyond technical completion
     - Research codebase:
         - Use Grep/Glob to analyze existing patterns
         - Identify impacted files and dependencies
@@ -200,7 +217,9 @@ steps:
         - Fill all sections following template structure
         - Set all steps to `status: scheduled`
         - Include full relative paths in all references
-        - Add dependency mapping and risk assessment
+        - Add comprehensive dependency mapping with cross-feature impact analysis
+        - Include structured risk assessment covering technical, business, and timeline factors
+        - Define measurable success criteria for each step
     - Run validation gate checks:
         - Verify implementability of all steps
         - Validate complexity estimates and resource requirements
