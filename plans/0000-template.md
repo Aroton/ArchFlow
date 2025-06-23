@@ -44,7 +44,25 @@ Each step is scored on multiple dimensions (1-5 scale unless noted):
 - **Technical Risk Level**: Complexity of technical implementation (1-5)
 - **Integration Complexity**: Number and complexity of integration points (1-3)
 
-**Complexity Threshold**: Steps scoring >12 should be considered for refactoring into smaller steps.
+**Complexity Thresholds**:
+- **Score 0-5**: Simple changes (fast validation, 2 recovery attempts)
+- **Score 6-8**: Moderate changes (fast + medium validation, 3 recovery attempts)
+- **Score 9-12**: Complex changes (progressive validation, 4 recovery attempts)
+- **Score 13+**: High complexity (full validation, 5 recovery attempts, user consultation)
+
+## Execution Strategy
+
+### Validation Strategy Mapping
+- **Low Risk (Score 0-5)**: Fast checks only (syntax, imports, basic linting)
+- **Medium Risk (Score 6-8)**: Fast + medium checks (unit tests, integration tests)
+- **High Risk (Score 9-12)**: Progressive validation with selective heavy checks
+- **Critical Risk (Score 13+)**: Full validation suite with comprehensive testing
+
+### Recovery Strategy
+- **Step-Level Recovery**: Individual step rollback and retry
+- **Batch-Level Recovery**: Related step group rollback
+- **Checkpoint Recovery**: Return to milestone validation points
+- **User Consultation**: Automatic escalation at defined thresholds
 
 ```yaml
 adr: architecture/adr/0000-example-adr.md # example ADR reference (UPDATE THIS with full path)
@@ -69,6 +87,12 @@ steps: # An ordered list of tasks, each with the following fields
       quality: "Code follows project standards, documentation complete"
       integration: "Integration points function correctly"
     dependencies: [] # List of step IDs this step depends on
+    execution_strategy:
+      validation_level: "fast_checks" # Based on complexity score: fast_checks, medium_checks, heavy_checks, full_suite
+      recovery_attempts: 2 # Based on complexity score
+      rollback_granularity: "step_level" # step_level, batch_level, checkpoint_level
+      batch_group: "ui_components" # Optional: group related steps for batch processing
+      critical_path: false # True if this step is on the critical dependency path
     status: "scheduled" # Initial status
   - id: step_2
     description: Describe the second step here
@@ -88,6 +112,12 @@ steps: # An ordered list of tasks, each with the following fields
       quality: "Code review passes, documentation updated"
       integration: "No breaking changes to existing functionality"
     dependencies: ["step_1"] # This step depends on step_1
+    execution_strategy:
+      validation_level: "fast_checks" # Based on complexity score
+      recovery_attempts: 2 # Based on complexity score
+      rollback_granularity: "step_level"
+      batch_group: "ui_components" # Same batch group as step_1
+      critical_path: false
     status: scheduled
 # Add more steps as needed
 ```
